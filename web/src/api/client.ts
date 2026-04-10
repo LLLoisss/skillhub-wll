@@ -387,6 +387,16 @@ export const authApi = {
       }),
     })
   },
+
+  async externalTokenLogin(token: string): Promise<User> {
+    return fetchJson<User>('/api/v1/auth/external/login', {
+      method: 'POST',
+      headers: await ensureCsrfHeaders({
+        'Content-Type': 'application/json',
+      }),
+      body: JSON.stringify({ token }),
+    })
+  },
 }
 
 export const accountApi = {

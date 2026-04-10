@@ -110,6 +110,7 @@ const MyStarsPage = createLazyRouteComponent(() => import('@/pages/dashboard/sta
 const NotificationsPage = createLazyRouteComponent(() => import('@/pages/notifications'), 'NotificationsPage')
 const TokensPage = createLazyRouteComponent(() => import('@/pages/dashboard/tokens'), 'TokensPage')
 const CliAuthPage = createLazyRouteComponent(() => import('@/pages/cli-auth'), 'CliAuthPage')
+const ExternalAuthPage = createLazyRouteComponent(() => import('@/pages/external-auth'), 'ExternalAuthPage')
 const SecuritySettingsPage = createLazyRouteComponent(
   () => import('@/pages/settings/security'),
   'SecuritySettingsPage',
@@ -341,6 +342,16 @@ const cliAuthRoute = createRoute({
   },
 })
 
+const externalAuthRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'auth/external',
+  validateSearch: (search: Record<string, unknown>): { token: string; returnTo: string } => ({
+    token: typeof search.token === 'string' ? search.token : '',
+    returnTo: typeof search.returnTo === 'string' ? search.returnTo : '',
+  }),
+  component: ExternalAuthPage,
+})
+
 const settingsSecurityRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'settings/security',
@@ -417,6 +428,7 @@ const routeTree = rootRoute.addChildren([
   dashboardNotificationsRoute,
   dashboardTokensRoute,
   cliAuthRoute,
+  externalAuthRoute,
   settingsSecurityRoute,
   settingsProfileRoute,
   settingsNotificationsRoute,

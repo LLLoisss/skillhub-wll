@@ -223,6 +223,12 @@
     "and": "and",
     "privacy": "Privacy Policy"
   },
+  "externalAuth": {
+    "loggingIn": "Logging in automatically, please wait...",
+    "loginFailed": "External login failed. Please try again or use another login method.",
+    "missingToken": "Missing login credentials. Cannot log in automatically.",
+    "goToLogin": "Go to login page"
+  },
   "register": {
     "title": "Create Account",
     "subtitle": "Register locally or sign in directly with OAuth.",

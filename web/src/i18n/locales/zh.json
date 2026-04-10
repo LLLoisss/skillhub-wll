@@ -223,6 +223,12 @@
     "and": "和",
     "privacy": "隐私政策"
   },
+  "externalAuth": {
+    "loggingIn": "正在自动登录，请稍候...",
+    "loginFailed": "外部登录失败，请重试或使用其他方式登录。",
+    "missingToken": "缺少登录凭证，无法自动登录。",
+    "goToLogin": "前往登录页面"
+  },
   "register": {
     "title": "创建账号",
     "subtitle": "支持本地注册，也可以直接使用 OAuth 登录进入平台。",
