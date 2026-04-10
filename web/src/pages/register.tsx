@@ -37,13 +37,13 @@ export function RegisterPage() {
       <Card className="w-full border-slate-200 bg-white/95 shadow-xl">
         <CardHeader className="space-y-3 text-center">
           <CardTitle>{t('register.title')}</CardTitle>
-          <CardDescription>{t('register.subtitle')}</CardDescription>
+          {/* <CardDescription>{t('register.subtitle')}</CardDescription> */}
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="local" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-1">
               <TabsTrigger value="local">{t('register.tabLocal')}</TabsTrigger>
-              <TabsTrigger value="oauth">{t('register.tabOAuth')}</TabsTrigger>
+              {/* <TabsTrigger value="oauth">{t('register.tabOAuth')}</TabsTrigger> */}
             </TabsList>
 
             <TabsContent value="local">
@@ -100,12 +100,12 @@ export function RegisterPage() {
               </form>
             </TabsContent>
 
-            <TabsContent value="oauth" className="space-y-4">
+            {/* <TabsContent value="oauth" className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 {t('register.oauthHint')}
               </p>
               <LoginButton returnTo={returnTo} />
-            </TabsContent>
+            </TabsContent> */}
           </Tabs>
         </CardContent>
       </Card>

@@ -104,7 +104,7 @@ export function LandingPage() {
           className="text-base md:text-lg text-center max-w-2xl mb-10 leading-relaxed"
           style={{ color: 'hsl(var(--text-secondary))' }}
         >
-          {t('landing.hero.subtitle')}
+          {/* {t('landing.hero.subtitle')} */}
         </p>
 
         {/* Search box */}
@@ -151,7 +151,7 @@ export function LandingPage() {
         </div>
 
         {/* Stats */}
-        <div ref={statsView.ref} className={`flex flex-row justify-center gap-16 md:gap-24 scroll-fade-up${statsView.inView ? ' in-view' : ''}`} style={{ transitionDelay: '0.15s' }}>
+        {/* <div ref={statsView.ref} className={`flex flex-row justify-center gap-16 md:gap-24 scroll-fade-up${statsView.inView ? ' in-view' : ''}`} style={{ transitionDelay: '0.15s' }}>
           {stats.map((stat) => (
             <div key={stat.label} className="flex flex-col items-center">
               <span className="text-3xl md:text-4xl font-bold tracking-tight text-brand-gradient mb-1">
@@ -162,11 +162,11 @@ export function LandingPage() {
               </span>
             </div>
           ))}
-        </div>
+        </div> */}
       </main>
 
       {/* Features Section */}
-      <section ref={featuresView.ref} className={`relative z-10 w-full py-20 md:py-24 px-6 scroll-fade-up${featuresView.inView ? ' in-view' : ''}`} style={{ background: 'var(--bg-page, hsl(var(--background)))' }}>
+      {/* <section ref={featuresView.ref} className={`relative z-10 w-full py-20 md:py-24 px-6 scroll-fade-up${featuresView.inView ? ' in-view' : ''}`} style={{ background: 'var(--bg-page, hsl(var(--background)))' }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3" style={{ color: 'hsl(var(--foreground))' }}>
@@ -197,15 +197,15 @@ export function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Quick Start */}
-      <div ref={quickStartView.ref} className={`scroll-fade-up${quickStartView.inView ? ' in-view' : ''}`}>
+      {/* <div ref={quickStartView.ref} className={`scroll-fade-up${quickStartView.inView ? ' in-view' : ''}`}>
         <LandingQuickStartSection />
-      </div>
+      </div> */}
 
       {/* Popular Downloads Section */}
-      <section ref={popularView.ref} className={`relative z-10 w-full py-20 md:py-24 px-6 scroll-fade-up${popularView.inView ? ' in-view' : ''}`} style={{ background: 'var(--bg-page, hsl(var(--background)))' }}>
+      {/* <section ref={popularView.ref} className={`relative z-10 w-full py-20 md:py-24 px-6 scroll-fade-up${popularView.inView ? ' in-view' : ''}`} style={{ background: 'var(--bg-page, hsl(var(--background)))' }}>
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -236,10 +236,10 @@ export function LandingPage() {
             </div>
           )}
         </div>
-      </section>
+      </section> */}
 
       {/* Latest Releases Section */}
-      <section ref={latestView.ref} className={`relative z-10 w-full py-20 md:py-24 px-6 scroll-fade-up${latestView.inView ? ' in-view' : ''}`} style={{ background: 'var(--bg-page, hsl(var(--background)))' }}>
+      {/* <section ref={latestView.ref} className={`relative z-10 w-full py-20 md:py-24 px-6 scroll-fade-up${latestView.inView ? ' in-view' : ''}`} style={{ background: 'var(--bg-page, hsl(var(--background)))' }}>
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -270,7 +270,7 @@ export function LandingPage() {
             </div>
           )}
         </div>
-      </section>
+      </section> */}
     </>
-  )
+  );
 }

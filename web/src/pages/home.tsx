@@ -42,7 +42,7 @@ export function HomePage() {
             {t('home.subtitle')}
           </p>
           <p className="text-base max-w-xl mx-auto" style={{ color: 'hsl(var(--muted-foreground))' }}>
-            {t('home.description')}
+            {/* {t('home.description')} */}
           </p>
         </div>
 
@@ -68,7 +68,7 @@ export function HomePage() {
       </div>
 
       {/* Popular Downloads Section */}
-      <section className="space-y-6 animate-fade-up">
+      {/* <section className="space-y-6 animate-fade-up">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight mb-2" style={{ color: 'hsl(var(--foreground))' }}>
@@ -97,10 +97,10 @@ export function HomePage() {
             ))}
           </div>
         )}
-      </section>
+      </section> */}
 
       {/* Latest Releases Section */}
-      <section className="space-y-6 animate-fade-up">
+      {/* <section className="space-y-6 animate-fade-up">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight mb-2" style={{ color: 'hsl(var(--foreground))' }}>
@@ -129,10 +129,10 @@ export function HomePage() {
             ))}
           </div>
         )}
-      </section>
+      </section> */}
 
       {/* Quick Start Section */}
-      <QuickStartSection ns="home" />
+      {/* <QuickStartSection ns="home" /> */}
     </div>
   )
 }

@@ -999,7 +999,7 @@ export function SkillDetailPage() {
           </div>
         </Card>
 
-        {publishedVersion && canInteract && (
+        {/* {publishedVersion && canInteract && (
           <Card className="p-5 space-y-4">
             <div className="flex items-center gap-2">
               <Terminal className="w-4 h-4 text-muted-foreground" />
@@ -1014,7 +1014,7 @@ export function SkillDetailPage() {
               version={publishedVersion.version}
             />
           </Card>
-        )}
+        )} */}
 
         {hasPublishedPendingReview && ownerPreviewVersion && (
           <Card className="border-amber-500/30 bg-amber-500/5 p-5 space-y-4">

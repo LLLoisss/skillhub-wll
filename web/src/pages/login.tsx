@@ -72,7 +72,7 @@ export function LoginPage() {
           </div>
           <h1 className="text-4xl font-bold font-heading text-foreground">{t('login.title')}</h1>
           <p className="text-muted-foreground text-lg">
-            {t('login.subtitle')}
+            {/* {t('login.subtitle')} */}
           </p>
         </div>
 
@@ -89,9 +89,9 @@ export function LoginPage() {
             />
 
             <Tabs defaultValue="password" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-1">
                 <TabsTrigger value="password">{t('login.tabPassword')}</TabsTrigger>
-                <TabsTrigger value="oauth">{t('login.tabOAuth')}</TabsTrigger>
+                {/* <TabsTrigger value="oauth">{t('login.tabOAuth')}</TabsTrigger> */}
               </TabsList>
 
               <TabsContent value="password">
@@ -174,17 +174,17 @@ export function LoginPage() {
                 </form>
               </TabsContent>
 
-              <TabsContent value="oauth" className="space-y-4">
+              {/* <TabsContent value="oauth" className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   {t('login.oauthHint')}
                 </p>
                 <LoginButton returnTo={returnTo} />
-              </TabsContent>
+              </TabsContent> */}
             </Tabs>
           </div>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground">
+        {/* <p className="text-center text-xs text-muted-foreground">
           {t('login.agreementPrefix')}
           {isChinese ? null : ' '}
           <Link to="/terms" className="text-primary hover:underline">
@@ -196,7 +196,7 @@ export function LoginPage() {
           <Link to="/privacy" className="text-primary hover:underline">
             {t('login.privacy')}
           </Link>
-        </p>
+        </p> */}
       </div>
     </div>
   )
