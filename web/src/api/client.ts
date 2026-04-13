@@ -389,12 +389,12 @@ export const authApi = {
   },
 
   async externalTokenLogin(token: string): Promise<User> {
-    return fetchJson<User>('/api/v1/auth/external/login', {
+    return fetchJson<User>('/api/v1/auth/bocomcode/login', {
       method: 'POST',
       headers: await ensureCsrfHeaders({
         'Content-Type': 'application/json',
       }),
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ boComCodeToken: token }),
     })
   },
 }

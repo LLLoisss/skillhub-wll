@@ -161,7 +161,7 @@ export function LoginPage() {
                     {loginMutation.isPending ? t('login.submitting') : t('login.submit')}
                   </Button>
                   <p className="text-center text-sm text-muted-foreground">
-                    {t('login.noAccount')}
+                    {/* {t('login.noAccount')}
                     {' '}
                     <Link
                       to="/register"
@@ -169,7 +169,7 @@ export function LoginPage() {
                       className="font-medium text-primary hover:underline"
                     >
                       {t('login.register')}
-                    </Link>
+                    </Link> */}
                   </p>
                 </form>
               </TabsContent>

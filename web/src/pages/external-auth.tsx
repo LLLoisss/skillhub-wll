@@ -4,18 +4,18 @@ import { useTranslation } from 'react-i18next'
 import { useExternalTokenLogin } from '@/features/auth/use-external-token-login'
 
 /**
- * External token authentication page.
+ * 外部令牌身份验证页面。
  *
- * This page is the entry point when a user is redirected from an external already-authenticated
- * project. The external project appends a one-time `token` query parameter to the URL:
+ * 本页面是用户从已通过身份验证的外部项目重定向而来的入口点。
+ * 外部项目会在 URL 中附加一个一次性的 `token` 查询参数：
  *
- *   https://skillhub.example.com/auth/external?token=xxx&returnTo=/dashboard
+ *   https://skillhub.example.com/auth/external?token=xxx&returnTo=/
  *
- * Flow:
- * 1. Extract `token` from URL search params
- * 2. Call backend API to exchange the token for a session + user info
- * 3. On success: redirect to `returnTo` (defaults to /dashboard)
- * 4. On failure: show error and offer a link to the normal login page
+ * 流程：
+ * 1. 从 URL 查询参数中提取 token
+ * 2. 调用后端 API 以令牌换取会话 (Session) 和用户信息
+ * 3. 成功时：重定向至 returnTo 页面（默认为 /）
+ * 4. 失败时：显示错误信息，并提供指向常规登录页面的链接
  */
 export function ExternalAuthPage() {
   const { t } = useTranslation()
@@ -25,7 +25,7 @@ export function ExternalAuthPage() {
   const attemptedRef = useRef(false)
 
   const token = search.token
-  const returnTo = search.returnTo && search.returnTo.startsWith('/') ? search.returnTo : '/dashboard'
+  const returnTo = search.returnTo && search.returnTo.startsWith('/') ? search.returnTo : '/'
 
   useEffect(() => {
     if (attemptedRef.current || !token) {
@@ -50,12 +50,12 @@ export function ExternalAuthPage() {
         <div className="w-full max-w-md space-y-6 text-center animate-fade-up">
           <div className="glass-strong p-8 rounded-2xl space-y-4">
             <p className="text-sm text-red-600">{t('externalAuth.missingToken')}</p>
-            <a
+            {/* <a
               href="/login"
               className="inline-block text-sm font-medium text-primary hover:underline"
             >
               {t('externalAuth.goToLogin')}
-            </a>
+            </a> */}
           </div>
         </div>
       </div>
@@ -71,12 +71,12 @@ export function ExternalAuthPage() {
             <p className="text-sm text-red-600">
               {mutation.error?.message || t('externalAuth.loginFailed')}
             </p>
-            <a
+            {/* <a
               href="/login"
               className="inline-block text-sm font-medium text-primary hover:underline"
             >
               {t('externalAuth.goToLogin')}
-            </a>
+            </a> */}
           </div>
         </div>
       </div>

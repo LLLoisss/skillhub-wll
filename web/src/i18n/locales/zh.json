@@ -225,7 +225,7 @@
   },
   "externalAuth": {
     "loggingIn": "正在自动登录，请稍候...",
-    "loginFailed": "外部登录失败，请重试或使用其他方式登录。",
+    "loginFailed": "外部登录失败，请重试。",
     "missingToken": "缺少登录凭证，无法自动登录。",
     "goToLogin": "前往登录页面"
   },

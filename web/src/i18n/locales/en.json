@@ -225,7 +225,7 @@
   },
   "externalAuth": {
     "loggingIn": "Logging in automatically, please wait...",
-    "loginFailed": "External login failed. Please try again or use another login method.",
+    "loginFailed": "External login failed. Please try again.",
     "missingToken": "Missing login credentials. Cannot log in automatically.",
     "goToLogin": "Go to login page"
   },
