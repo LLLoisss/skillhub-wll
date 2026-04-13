@@ -1,8 +1,9 @@
 // Polyfill Object.hasOwn for older browsers (e.g. Edge < 93)
-if (!Object.hasOwn) {
-  Object.hasOwn = function hasOwn(obj: object, prop: PropertyKey): boolean {
-    return Object.prototype.hasOwnProperty.call(obj, prop)
-  }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+if (typeof (Object as any).hasOwn !== 'function') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (Object as any).hasOwn = (obj: object, prop: PropertyKey): boolean =>
+    Object.prototype.hasOwnProperty.call(obj, prop)
 }
 
 /**
