@@ -1,3 +1,10 @@
+// Polyfill Object.hasOwn for older browsers (e.g. Edge < 93)
+if (!Object.hasOwn) {
+  Object.hasOwn = function hasOwn(obj: object, prop: PropertyKey): boolean {
+    return Object.prototype.hasOwnProperty.call(obj, prop)
+  }
+}
+
 /**
  * Bootstraps runtime configuration before the React bundle mounts.
  *
