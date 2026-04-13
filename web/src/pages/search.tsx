@@ -51,7 +51,7 @@ function sortStarredSkills(skills: SkillSummary[], sort: string): SkillSummary[]
 export function SearchPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const searchParams = useSearch({ from: '/search' })
+  const searchParams = useSearch({ strict: false }) as { q?: string; label?: string; sort?: string; page?: number; starredOnly?: boolean }
   const { isAuthenticated } = useAuth()
 
   const q = normalizeSearchQuery(searchParams.q || '')
@@ -90,14 +90,14 @@ export function SearchPage() {
 
     if (!normalizedQuery) {
       startTransition(() => {
-        navigate({ to: '/search', search: { q: '', label: selectedLabel, sort, page: 0, starredOnly }, replace: page === 0 })
+        navigate({ to: '/', search: { q: '', label: selectedLabel, sort, page: 0, starredOnly }, replace: page === 0 })
       })
       return
     }
 
     const timeoutId = window.setTimeout(() => {
       startTransition(() => {
-        navigate({ to: '/search', search: { q: normalizedQuery, label: selectedLabel, sort, page: 0, starredOnly }, replace: true })
+        navigate({ to: '/', search: { q: normalizedQuery, label: selectedLabel, sort, page: 0, starredOnly }, replace: true })
       })
     }, 250)
 
@@ -108,21 +108,21 @@ export function SearchPage() {
     const normalizedQuery = normalizeSearchQuery(query)
     setQueryInput(query)
     startTransition(() => {
-      navigate({ to: '/search', search: { q: normalizedQuery, label: selectedLabel, sort, page: 0, starredOnly }, replace: true })
+      navigate({ to: '/', search: { q: normalizedQuery, label: selectedLabel, sort, page: 0, starredOnly }, replace: true })
     })
   }
 
   const handleSortChange = (newSort: string) => {
-    navigate({ to: '/search', search: { q, label: selectedLabel, sort: newSort, page: 0, starredOnly } })
+    navigate({ to: '/', search: { q, label: selectedLabel, sort: newSort, page: 0, starredOnly } })
   }
 
   const handlePageChange = (newPage: number) => {
-    navigate({ to: '/search', search: { q, label: selectedLabel, sort, page: newPage, starredOnly } })
+    navigate({ to: '/', search: { q, label: selectedLabel, sort, page: newPage, starredOnly } })
   }
 
   const handleLabelToggle = (label: string) => {
     const nextLabel = selectedLabel === label ? '' : label
-    navigate({ to: '/search', search: { q, label: nextLabel, sort, page: 0, starredOnly } })
+    navigate({ to: '/', search: { q, label: nextLabel, sort, page: 0, starredOnly } })
   }
 
   const handleStarredToggle = () => {
@@ -136,7 +136,7 @@ export function SearchPage() {
       return
     }
 
-    navigate({ to: '/search', search: { q, label: selectedLabel, sort, page: 0, starredOnly: !starredOnly } })
+    navigate({ to: '/', search: { q, label: selectedLabel, sort, page: 0, starredOnly: !starredOnly } })
   }
 
   const handleSkillClick = (namespace: string, slug: string) => {

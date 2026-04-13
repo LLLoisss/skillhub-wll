@@ -61,7 +61,6 @@ function createRoleProtectedRouteComponent<TModule extends Record<string, unknow
   }
 }
 
-const LandingPage = createLazyRouteComponent(() => import('@/pages/landing'), 'LandingPage')
 const HomePage = createLazyRouteComponent(() => import('@/pages/home'), 'HomePage')
 const LoginPage = createLazyRouteComponent(() => import('@/pages/login'), 'LoginPage')
 const RegisterPage = createLazyRouteComponent(() => import('@/pages/register'), 'RegisterPage')
@@ -157,7 +156,7 @@ const requireAuth = createRequireAuth(getCurrentUser)
 const landingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: LandingPage,
+  component: SearchPage,
 })
 
 const skillsRoute = createRoute({
@@ -194,7 +193,10 @@ const privacyRoute = createRoute({
 const searchRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'search',
-  component: SearchPage,
+  beforeLoad: ({ search }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    throw redirect({ to: '/', search: search as any })
+  },
   validateSearch: (search: Record<string, unknown>): { q: string; label?: string; sort: string; page: number; starredOnly: boolean } => {
     return {
       q: normalizeSearchQuery(typeof search.q === 'string' ? search.q : ''),
