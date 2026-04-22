@@ -450,6 +450,7 @@ const routeTree = rootRoute.addChildren([
 
 export const router = createRouter({
   routeTree,
+  basepath: '/skillhub-web',
   defaultNotFoundComponent: DefaultNotFound,
 })
 

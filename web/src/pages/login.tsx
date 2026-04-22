@@ -161,9 +161,9 @@ export function LoginPage() {
                     {loginMutation.isPending ? t('login.submitting') : t('login.submit')}
                   </Button>
                   <p className="text-center text-sm">
-                    <Link to="/reset-password" className="font-medium text-primary hover:underline">
+                    {/* <Link to="/reset-password" className="font-medium text-primary hover:underline">
                       {t('login.forgotPassword')}
-                    </Link>
+                    </Link> */}
                   </p>
                   <p className="text-center text-sm text-muted-foreground">
                     {/* {t('login.noAccount')}

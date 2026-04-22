@@ -1,5 +1,5 @@
 window.__SKILLHUB_RUNTIME_CONFIG__ = {
-  apiBaseUrl: '',
+  apiBaseUrl: '/skillhub-server',
   appBaseUrl: '',
   authDirectEnabled: 'false',
   authDirectProvider: '',

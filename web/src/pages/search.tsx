@@ -125,7 +125,7 @@ export function SearchPage() {
     isLoading: isLoadingStarred,
     isFetching: isFetchingStarred,
   } = useMyStars(starredOnly && isAuthenticated)
-  const shouldShowGuidance = !starredOnly && !q && !selectedLabel
+  const shouldShowGuidance = false
 
   useEffect(() => {
     // Debounce URL updates while the user is typing so query state stays shareable without

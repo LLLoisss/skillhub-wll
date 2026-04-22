@@ -377,7 +377,7 @@ export const authApi = {
   },
 
   async logout(): Promise<void> {
-    const response = await fetch('/api/v1/auth/logout', {
+    const response = await fetch(withBaseUrl('/api/v1/auth/logout'), {
       method: 'POST',
       headers: withCsrf(),
     })

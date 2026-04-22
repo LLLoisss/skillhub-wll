@@ -78,7 +78,7 @@ export function UserMenu({ user, triggerClassName }: UserMenuProps) {
       // Always clear cache and redirect, even if API call fails
       clearSessionScopedQueries(queryClient)
       queryClient.setQueryData(['auth', 'me'], null)
-      window.location.href = '/'
+      window.location.href = '/skillhub-web/'
     }
   }
 
@@ -189,9 +189,9 @@ export function UserMenu({ user, triggerClassName }: UserMenuProps) {
               </Link>
             ) : null}
             <div className="-mx-1 my-1 h-px bg-muted" />
-            <Link to="/settings/profile" className={menuItemClassName} onClick={closeMenu}>
+            {/* <Link to="/settings/profile" className={menuItemClassName} onClick={closeMenu}>
               {t('user.menu.profile')}
-            </Link>
+            </Link> */}
             <Link to="/settings/notifications" className={menuItemClassName} onClick={closeMenu}>
               {t('user.menu.notifications')}
             </Link>

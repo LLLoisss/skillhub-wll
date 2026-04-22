@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 export default defineConfig({
+  base: '/skillhub-web/',
   plugins: [react()],
   resolve: {
     alias: {
@@ -19,7 +20,7 @@ export default defineConfig({
       interval: 150,
     },
     proxy: {
-      '/api': {
+      '/skillhub-server': {
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
