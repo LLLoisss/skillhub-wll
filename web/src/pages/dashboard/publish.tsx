@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { UploadZone } from '@/features/publish/upload-zone'
@@ -17,15 +17,18 @@ import {
   SelectTrigger,
   SelectValue,
   normalizeSelectValue,
+  SELECT_TRIGGER_CLASS_NAME,
 } from '@/shared/ui/select'
 import { Label } from '@/shared/ui/label'
 import { Card } from '@/shared/ui/card'
 import { usePublishSkill } from '@/shared/hooks/use-skill-queries'
+import { useAllDepartments } from '@/shared/hooks/use-department-queries'
 import { useMyNamespaces } from '@/shared/hooks/use-namespace-queries'
 import { ConfirmDialog } from '@/shared/components/confirm-dialog'
 import { DashboardPageHeader } from '@/shared/components/dashboard-page-header'
 import { toast } from '@/shared/lib/toast'
 import { ApiError } from '@/api/client'
+import { ChevronDown, Check } from 'lucide-react'
 
 const EMPTY_NAMESPACE_VALUE = '__select_namespace__'
 
@@ -34,12 +37,32 @@ export function PublishPage() {
   const navigate = useNavigate()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [namespaceSlug, setNamespaceSlug] = useState<string>('')
+  const [department, setDepartment] = useState<string>('')
   const [visibility, setVisibility] = useState<string>('PUBLIC')
   const [warningDialogOpen, setWarningDialogOpen] = useState(false)
   const [precheckWarnings, setPrecheckWarnings] = useState<string[]>([])
+  const [departmentOpen, setDepartmentOpen] = useState(false)
+  const [departmentSearch, setDepartmentSearch] = useState('')
+  const departmentRef = useRef<HTMLDivElement>(null)
 
   const { data: namespaces, isLoading: isLoadingNamespaces } = useMyNamespaces()
+  const { data: allDepartments, isLoading: isLoadingAllDepartments } = useAllDepartments()
   const publishMutation = usePublishSkill()
+
+  const filteredDepartments = (allDepartments ?? []).filter((dept) =>
+    dept.department.toLowerCase().includes(departmentSearch.toLowerCase())
+  )
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (departmentRef.current && !departmentRef.current.contains(event.target as Node)) {
+        setDepartmentOpen(false)
+        setDepartmentSearch('')
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
   const selectedNamespace = namespaces?.find((ns) => ns.slug === namespaceSlug)
   const namespaceOnlyLabel = selectedNamespace?.type === 'GLOBAL'
     ? t('publish.visibilityOptions.loggedInUsersOnly')
@@ -58,7 +81,7 @@ export function PublishPage() {
   }
 
   const publishSkill = async (confirmWarnings = false) => {
-    if (!selectedFile || !namespaceSlug) {
+    if (!selectedFile || !namespaceSlug || !department) {
       toast.error(t('publish.selectRequired'))
       return
     }
@@ -69,6 +92,7 @@ export function PublishPage() {
         file: selectedFile,
         visibility,
         confirmWarnings,
+        department: department || undefined,
       })
       setPrecheckWarnings([])
       setWarningDialogOpen(false)
@@ -173,6 +197,79 @@ export function PublishPage() {
         </div>
 
         <div className="space-y-3">
+          <Label htmlFor="department" className="text-sm font-semibold font-heading">{t('publish.department')}</Label>
+          {isLoadingAllDepartments ? (
+            <div className="h-11 animate-shimmer rounded-lg" />
+          ) : (
+            <div ref={departmentRef} className="relative">
+              {departmentOpen ? (
+                <div className="flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-primary/50 bg-secondary/50 px-4 py-2 text-sm ring-2 ring-primary/40 ring-offset-background transition-all duration-200">
+                  <input
+                    autoFocus
+                    value={departmentSearch}
+                    onChange={(e) => setDepartmentSearch(e.target.value)}
+                    placeholder={t('publish.searchDepartment')}
+                    className="flex-1 min-w-0 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
+                  />
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  id="department"
+                  onClick={() => {
+                    setDepartmentOpen(true)
+                    setDepartmentSearch('')
+                  }}
+                  className={SELECT_TRIGGER_CLASS_NAME}
+                  aria-expanded={false}
+                >
+                  <span className={department ? 'text-foreground line-clamp-1' : 'text-muted-foreground line-clamp-1'}>
+                    {department || t('publish.selectDepartment')}
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                </button>
+              )}
+              {departmentOpen && (
+                <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-md">
+                  <div className="max-h-60 overflow-y-auto p-1">
+                    {filteredDepartments.map((dept) => (
+                      <button
+                        key={dept.id}
+                        type="button"
+                        onClick={() => {
+                          setDepartment(dept.department)
+                          setDepartmentOpen(false)
+                          setDepartmentSearch('')
+                        }}
+                        className="relative flex w-full cursor-pointer select-none items-center rounded-md py-2 pl-8 pr-4 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                      >
+                        {department === dept.department && <Check className="absolute left-2 h-4 w-4" />}
+                        {dept.department}
+                      </button>
+                    ))}
+                    {filteredDepartments.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDepartment(t('publish.otherDepartment'))
+                          setDepartmentOpen(false)
+                          setDepartmentSearch('')
+                        }}
+                        className="relative flex w-full cursor-pointer select-none items-center rounded-md py-2 pl-8 pr-4 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                      >
+                        {department === t('publish.otherDepartment') && <Check className="absolute left-2 h-4 w-4" />}
+                        {t('publish.otherDepartment')}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-3">
           <Label htmlFor="visibility" className="text-sm font-semibold font-heading">{t('publish.visibility')}</Label>
           <Select value={visibility} onValueChange={setVisibility}>
             <SelectTrigger id="visibility">
@@ -220,7 +317,7 @@ export function PublishPage() {
           className="w-full text-primary-foreground disabled:text-primary-foreground"
           size="lg"
           onClick={handlePublish}
-          disabled={!selectedFile || !namespaceSlug || publishMutation.isPending}
+          disabled={!selectedFile || !namespaceSlug || !department || publishMutation.isPending}
         >
           {publishMutation.isPending ? t('publish.publishing') : t('publish.confirm')}
         </Button>

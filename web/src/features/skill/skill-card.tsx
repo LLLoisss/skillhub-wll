@@ -53,6 +53,10 @@ export function SkillCard({ skill, onClick, highlightStarred = true }: SkillCard
           </div>
         </div>
 
+		<p className="text-xs text-muted-foreground mb-2">
+            {skill.ownerUsername ?? '—'}&nbsp;·&nbsp;{skill.ownerDepartment || '其他部门'}
+        </p>
+
         {skill.summary && (
           <p className="text-sm text-muted-foreground mb-4 line-clamp-2 leading-relaxed">
             {skill.summary}

@@ -139,6 +139,11 @@ export interface NamespaceCandidateUser {
   status: string
 }
 
+export interface Department {
+  id: number | string
+  department: string
+}
+
 // Skill types
 export interface SkillSummary {
   id: number
@@ -157,6 +162,8 @@ export interface SkillSummary {
   publishedVersion?: SkillLifecycleVersion
   ownerPreviewVersion?: SkillLifecycleVersion
   resolutionMode?: string
+  ownerUsername?: string
+  ownerDepartment?: string
 }
 
 export type LabelItem = Omit<components['schemas']['SkillLabelDto'], 'slug' | 'type' | 'displayName'> & {

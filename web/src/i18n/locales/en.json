@@ -1206,6 +1206,11 @@
     },
     "namespace": "Namespace",
     "selectNamespace": "Select namespace",
+    "department": "Department",
+    "selectDepartment": "Select department",
+    "searchDepartment": "Search department...",
+    "noDepartmentFound": "No department found",
+    "otherDepartment": "Other department",
     "visibility": "Visibility",
     "visibilityOptions": {
       "public": "Public",

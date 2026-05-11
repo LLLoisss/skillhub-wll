@@ -40,6 +40,7 @@ import type {
   AdminLabelInput,
   LabelDefinition,
   LabelItem,
+  Department,
 } from './types'
 import { ApiError } from '@/shared/lib/api-error'
 import i18n from '@/i18n/config'
@@ -729,6 +730,20 @@ export const namespaceApi = {
     await fetchJson<void>(`${WEB_API_PREFIX}/namespaces/${normalizeNamespaceSlug(slug)}/members/${encodeURIComponent(userId)}`, {
       method: 'DELETE',
       headers: await ensureCsrfHeaders(),
+    })
+  },
+}
+
+export const departmentApi = {
+  async listAll(): Promise<Department[]> {
+    return fetchJson<Department[]>(`/api/v1/user/department/queryAll`)
+  },
+
+  async listByEmail(email: string): Promise<Department[]> {
+    return fetchJson<Department[]>(`/api/v1/user/department/querybyuser`, {
+      method: 'POST',
+      headers: getCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ email }),
     })
   },
 }
