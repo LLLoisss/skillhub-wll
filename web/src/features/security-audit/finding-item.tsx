@@ -15,7 +15,12 @@ export function FindingItem({ finding }: FindingItemProps) {
     <div className="space-y-2 rounded-xl border border-border/60 bg-card/70 p-4">
       <div className="flex items-center gap-2 flex-wrap">
         <SeverityBadge severity={finding.severity} />
-        <code className="text-xs font-mono text-muted-foreground">{finding.ruleId}</code>
+        <span
+          className="text-xs font-medium text-muted-foreground"
+          title={finding.ruleId}
+        >
+          {t(`securityAudit.ruleId.${finding.ruleId}`, { defaultValue: finding.ruleId })}
+        </span>
         {location && (
           <span className="text-xs text-muted-foreground">{location}</span>
         )}
