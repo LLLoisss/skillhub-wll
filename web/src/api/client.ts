@@ -41,6 +41,7 @@ import type {
   LabelDefinition,
   LabelItem,
   Department,
+  UserProfileByEmail,
 } from './types'
 import { ApiError } from '@/shared/lib/api-error'
 import i18n from '@/i18n/config'
@@ -736,11 +737,23 @@ export const namespaceApi = {
 
 export const departmentApi = {
   async listAll(): Promise<Department[]> {
-    return fetchJson<Department[]>(`/api/v1/user/department/queryAll`)
+    return fetchJson<Department[]>(`/api/v1/department/queryDepartment`, {
+      method: 'POST',
+      headers: getCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ "email":'' }),
+    })
   },
 
   async listByEmail(email: string): Promise<Department[]> {
-    return fetchJson<Department[]>(`/api/v1/user/department/querybyuser`, {
+    return fetchJson<Department[]>(`/api/v1/department/queryDepartment`, {
+      method: 'POST',
+      headers: getCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ email }),
+    })
+  },
+
+  async getUserProfileByEmail(email: string): Promise<UserProfileByEmail> {
+    return fetchJson<UserProfileByEmail>(`/api/v1/user/queryUserDepartment`, {
       method: 'POST',
       headers: getCsrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ email }),

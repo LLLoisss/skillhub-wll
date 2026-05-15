@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/features/auth/use-auth'
 import { UploadZone } from '@/features/publish/upload-zone'
 import {
   extractPrecheckWarnings,
@@ -22,22 +23,44 @@ import {
 import { Label } from '@/shared/ui/label'
 import { Card } from '@/shared/ui/card'
 import { usePublishSkill } from '@/shared/hooks/use-skill-queries'
-import { useAllDepartments } from '@/shared/hooks/use-department-queries'
+import { useAllDepartments, useUserProfileByEmail } from '@/shared/hooks/use-department-queries'
 import { useMyNamespaces } from '@/shared/hooks/use-namespace-queries'
+import { Input } from '@/shared/ui/input'
 import { ConfirmDialog } from '@/shared/components/confirm-dialog'
 import { DashboardPageHeader } from '@/shared/components/dashboard-page-header'
 import { toast } from '@/shared/lib/toast'
 import { ApiError } from '@/api/client'
+import type { Department } from '@/api/types'
 import { ChevronDown, Check } from 'lucide-react'
+
+interface DeptOption {
+  label: string
+  primary: string
+  secondary: string
+}
+
+function flattenDepts(depts: Department[]): DeptOption[] {
+  const result: DeptOption[] = []
+  for (const parent of depts) {
+    if (parent.children && parent.children.length > 0) {
+      for (const child of parent.children) {
+        result.push({ label: `${parent.name}-${child.name}`, primary: parent.name, secondary: child.name })
+      }
+    }
+  }
+  return result
+}
 
 const EMPTY_NAMESPACE_VALUE = '__select_namespace__'
 
 export function PublishPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [namespaceSlug, setNamespaceSlug] = useState<string>('')
-  const [department, setDepartment] = useState<string>('')
+  const [selectedDept, setSelectedDept] = useState<DeptOption | null>(null)
+  const [publisherName, setPublisherName] = useState<string>('')
   const [visibility, setVisibility] = useState<string>('PUBLIC')
   const [warningDialogOpen, setWarningDialogOpen] = useState(false)
   const [precheckWarnings, setPrecheckWarnings] = useState<string[]>([])
@@ -47,11 +70,31 @@ export function PublishPage() {
 
   const { data: namespaces, isLoading: isLoadingNamespaces } = useMyNamespaces()
   const { data: allDepartments, isLoading: isLoadingAllDepartments } = useAllDepartments()
+  const { data: userProfile } = useUserProfileByEmail(user?.email)
   const publishMutation = usePublishSkill()
 
-  const filteredDepartments = (allDepartments ?? []).filter((dept) =>
-    dept.department.toLowerCase().includes(departmentSearch.toLowerCase())
-  )
+  useEffect(() => {
+    if (userProfile) {
+      if (userProfile.name) {
+        setPublisherName(userProfile.name)
+      }
+      if (userProfile.departments && userProfile.departments.length > 0) {
+        const firstParent = userProfile.departments[0]
+        if (firstParent.children && firstParent.children.length > 0) {
+          const firstChild = firstParent.children[0]
+          setSelectedDept((prev) => prev || { label: `${firstParent.name}-${firstChild.name}`, primary: firstParent.name, secondary: firstChild.name })
+        }
+      }
+    }
+  }, [userProfile])
+
+  const userDeptOptions = flattenDepts(userProfile?.departments ?? [])
+  const allDeptOptions = flattenDepts(allDepartments ?? [])
+  const userLabels = new Set(userDeptOptions.map((d) => d.label))
+  const extraDeptOptions = allDeptOptions.filter((d) => !userLabels.has(d.label))
+  const searchLower = departmentSearch.toLowerCase()
+  const filteredUserOptions = userDeptOptions.filter((d) => d.label.toLowerCase().includes(searchLower))
+  const filteredExtraOptions = extraDeptOptions.filter((d) => d.label.toLowerCase().includes(searchLower))
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -81,7 +124,7 @@ export function PublishPage() {
   }
 
   const publishSkill = async (confirmWarnings = false) => {
-    if (!selectedFile || !namespaceSlug || !department) {
+    if (!selectedFile || !namespaceSlug || !selectedDept || !publisherName) {
       toast.error(t('publish.selectRequired'))
       return
     }
@@ -92,7 +135,9 @@ export function PublishPage() {
         file: selectedFile,
         visibility,
         confirmWarnings,
-        department: department || undefined,
+        primaryDepartment: selectedDept?.primary,
+        secondaryDepartment: selectedDept?.secondary,
+        publisherName: publisherName || undefined,
       })
       setPrecheckWarnings([])
       setWarningDialogOpen(false)
@@ -197,6 +242,17 @@ export function PublishPage() {
         </div>
 
         <div className="space-y-3">
+          <Label htmlFor="publisherName" className="text-sm font-semibold font-heading">{t('publish.publisherName')}</Label>
+          <Input
+            id="publisherName"
+            type="text"
+            value={publisherName}
+            onChange={(e) => setPublisherName(e.target.value)}
+            placeholder={t('publish.publisherNamePlaceholder')}
+          />
+        </div>
+
+        <div className="space-y-3">
           <Label htmlFor="department" className="text-sm font-semibold font-heading">{t('publish.department')}</Label>
           {isLoadingAllDepartments ? (
             <div className="h-11 animate-shimmer rounded-lg" />
@@ -224,8 +280,8 @@ export function PublishPage() {
                   className={SELECT_TRIGGER_CLASS_NAME}
                   aria-expanded={false}
                 >
-                  <span className={department ? 'text-foreground line-clamp-1' : 'text-muted-foreground line-clamp-1'}>
-                    {department || t('publish.selectDepartment')}
+                  <span className={selectedDept ? 'text-foreground line-clamp-1' : 'text-muted-foreground line-clamp-1'}>
+                    {selectedDept?.label || t('publish.selectDepartment')}
                   </span>
                   <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
                 </button>
@@ -233,35 +289,48 @@ export function PublishPage() {
               {departmentOpen && (
                 <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-md">
                   <div className="max-h-60 overflow-y-auto p-1">
-                    {filteredDepartments.map((dept) => (
+                    {filteredUserOptions.map((opt) => (
                       <button
-                        key={dept.id}
+                        key={`user-${opt.label}`}
                         type="button"
                         onClick={() => {
-                          setDepartment(dept.department)
+                          setSelectedDept(opt)
                           setDepartmentOpen(false)
                           setDepartmentSearch('')
                         }}
                         className="relative flex w-full cursor-pointer select-none items-center rounded-md py-2 pl-8 pr-4 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
                       >
-                        {department === dept.department && <Check className="absolute left-2 h-4 w-4" />}
-                        {dept.department}
+                        {selectedDept?.label === opt.label && <Check className="absolute left-2 h-4 w-4" />}
+                        {opt.label}
                       </button>
                     ))}
-                    {filteredDepartments.length === 0 && (
+                    {filteredExtraOptions.map((opt) => (
                       <button
+                        key={`all-${opt.label}`}
                         type="button"
                         onClick={() => {
-                          setDepartment(t('publish.otherDepartment'))
+                          setSelectedDept(opt)
                           setDepartmentOpen(false)
                           setDepartmentSearch('')
                         }}
                         className="relative flex w-full cursor-pointer select-none items-center rounded-md py-2 pl-8 pr-4 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
                       >
-                        {department === t('publish.otherDepartment') && <Check className="absolute left-2 h-4 w-4" />}
-                        {t('publish.otherDepartment')}
+                        {selectedDept?.label === opt.label && <Check className="absolute left-2 h-4 w-4" />}
+                        {opt.label}
                       </button>
-                    )}
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedDept({ label: "其他部门", primary: "其他部门", secondary: "其他部门" })
+                        setDepartmentOpen(false)
+                        setDepartmentSearch('')
+                      }}
+                      className="relative flex w-full cursor-pointer select-none items-center rounded-md py-2 pl-8 pr-4 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                    >
+                      {selectedDept?.label === "其他部门" && <Check className="absolute left-2 h-4 w-4" />}
+                      {"其他部门"}
+                    </button>
                   </div>
                 </div>
               )}
@@ -317,7 +386,7 @@ export function PublishPage() {
           className="w-full text-primary-foreground disabled:text-primary-foreground"
           size="lg"
           onClick={handlePublish}
-          disabled={!selectedFile || !namespaceSlug || !department || publishMutation.isPending}
+          disabled={!selectedFile || !namespaceSlug || !selectedDept || !publisherName || publishMutation.isPending}
         >
           {publishMutation.isPending ? t('publish.publishing') : t('publish.confirm')}
         </Button>

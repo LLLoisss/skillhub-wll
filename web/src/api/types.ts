@@ -140,8 +140,15 @@ export interface NamespaceCandidateUser {
 }
 
 export interface Department {
-  id: number | string
-  department: string
+  id?: number
+  name: string
+  level: number
+  children?: Department[] | null
+}
+
+export interface UserProfileByEmail {
+  name?: string | null
+  departments?: Department[] | null
 }
 
 // Skill types
@@ -162,6 +169,9 @@ export interface SkillSummary {
   publishedVersion?: SkillLifecycleVersion
   ownerPreviewVersion?: SkillLifecycleVersion
   resolutionMode?: string
+  publisherName?: string
+  primaryDepartment?: string
+  secondaryDepartment?: string
   ownerUsername?: string
   ownerDepartment?: string
 }
