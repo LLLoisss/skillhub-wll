@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Share2, Check } from 'lucide-react'
 import { useCopyToClipboard } from '@/shared/lib/clipboard'
-import { getBaseUrl } from './install-command'
+import { getWebAppBaseUrl } from './install-command'
 
 interface ShareButtonProps {
   namespace: string
@@ -32,7 +32,7 @@ export function ShareButton({ namespace, slug, description }: ShareButtonProps) 
 
   const handleShare = async () => {
     try {
-      const baseUrl = getBaseUrl()
+      const baseUrl = getWebAppBaseUrl()
       const shareText = buildShareText(namespace, slug, description, baseUrl, t)
       await copy(shareText)
     } catch (err) {

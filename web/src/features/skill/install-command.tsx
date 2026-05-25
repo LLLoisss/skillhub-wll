@@ -28,6 +28,31 @@ export function getBaseUrl(): string {
   return `${window.location.protocol}//${window.location.host}`
 }
 
+/**
+ * Returns the web app base URL (origin + vite base path).
+ * Use this for share links that point to browser-navigable pages.
+ * For API registry URLs, use getBaseUrl() instead.
+ */
+export function getWebAppBaseUrl(): string {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+  const basePath = (import.meta.env.BASE_URL ?? '/').replace(/\/$/, '')
+  const runtimeConfig = window.__SKILLHUB_RUNTIME_CONFIG__
+  const configuredUrl = runtimeConfig?.appBaseUrl
+  let origin: string
+  if (configuredUrl && !configuredUrl.includes('localhost')) {
+    origin = configuredUrl.replace(/\/$/, '')
+  } else {
+    origin = `${window.location.protocol}//${window.location.host}`
+  }
+  // Append base path if not already present
+  if (basePath && !origin.endsWith(basePath)) {
+    return origin + basePath
+  }
+  return origin
+}
+
 export function buildInstallCommand(namespace: string, slug: string, baseUrl: string): string {
   const installTarget = buildInstallTarget(namespace, slug)
   return `npx clawhub install ${installTarget} --registry ${baseUrl}`
