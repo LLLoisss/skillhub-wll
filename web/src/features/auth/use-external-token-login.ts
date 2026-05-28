@@ -14,7 +14,10 @@ export function useExternalTokenLogin() {
 
   return useMutation<User, Error, string>({
     mutationFn: (token) => authApi.externalTokenLogin(token),
-    onSuccess: (user) => {
+    onSuccess: async (user) => {
+      // 取消任何正在飞行中的 ['auth', 'me'] 查询，防止登录前发出的旧请求（返回 null）
+      // 在 setQueryData 之后到达并覆盖刚写入的用户数据，导致导航竞态。
+      await queryClient.cancelQueries({ queryKey: ['auth', 'me'] })
       clearSessionScopedQueries(queryClient)
       queryClient.setQueryData<User | null>(['auth', 'me'], user)
     },

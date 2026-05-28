@@ -22,7 +22,12 @@ export function Layout() {
       resolvedPathname: s.resolvedLocation?.pathname,
     }),
   })
-  const { user, isLoading } = useAuth()
+  // 登录类页面在 login mutation 完成前不触发 me 查询，避免未认证请求干扰后续写入的用户数据
+  const isAuthInProgressPage =
+    pathname.startsWith('/auth/external') || pathname.startsWith('/login')
+  const { user: cachedUser, isLoading: cachedIsLoading } = useAuth(!isAuthInProgressPage)
+  const user = isAuthInProgressPage ? null : cachedUser
+  const isLoading = isAuthInProgressPage ? false : cachedIsLoading
   const [isHeaderElevated, setIsHeaderElevated] = useState(false)
   const contentLayoutPathname = resolveAppMainContentPathname(pathname, resolvedPathname)
   const mainContentLayout = getAppMainContentLayout(contentLayoutPathname)
