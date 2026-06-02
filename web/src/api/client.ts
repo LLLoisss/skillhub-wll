@@ -33,6 +33,7 @@ import type {
   CreateNamespaceRequest,
   NamespaceMember,
   NamespaceCandidateUser,
+  NamespaceApplicationItem,
   NotificationItem,
   NotificationPreferenceItem,
   NotificationUnreadCount,
@@ -733,6 +734,20 @@ export const namespaceApi = {
       headers: await ensureCsrfHeaders(),
     })
   },
+
+  async apply(request: CreateNamespaceRequest): Promise<Namespace> {
+    return fetchJson<Namespace>('/api/v1/namespaces/apply', {
+      method: 'POST',
+      headers: await ensureCsrfHeaders({
+        'Content-Type': 'application/json',
+      }),
+      body: JSON.stringify({
+        slug: normalizeNamespaceSlug(request.slug),
+        displayName: request.displayName.trim(),
+        description: request.description?.trim() || undefined,
+      }),
+    })
+  },
 }
 
 export const departmentApi = {
@@ -1253,6 +1268,41 @@ export const adminApi = {
 
   async rejectProfileReview(id: number, comment: string): Promise<void> {
     await fetchJson<void>(`/api/v1/admin/profile-reviews/${id}/reject`, {
+      method: 'POST',
+      headers: getCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ comment }),
+    })
+  },
+
+  async getNamespaceApplications(params: { status?: string; page?: number; size?: number; sortDirection?: 'ASC' | 'DESC' }) {
+    const searchParams = new URLSearchParams()
+    if (params.status) searchParams.set('status', params.status)
+    searchParams.set('page', String(params.page ?? 0))
+    searchParams.set('size', String(params.size ?? 20))
+    searchParams.set('sortDirection', params.sortDirection ?? 'DESC')
+    const response = await fetchJson<{
+      items: NamespaceApplicationItem[]
+      total: number
+      page: number
+      size: number
+    }>(`/api/v1/admin/namespace-applications?${searchParams}`)
+    return {
+      ...response,
+      totalElements: response.total,
+      totalPages: response.size > 0 ? Math.ceil(response.total / response.size) : 0,
+    }
+  },
+
+  async approveNamespaceApplication(id: number, comment?: string): Promise<void> {
+    await fetchJson<void>(`/api/v1/admin/namespace-applications/${id}/approve`, {
+      method: 'POST',
+      headers: getCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ comment }),
+    })
+  },
+
+  async rejectNamespaceApplication(id: number, comment: string): Promise<void> {
+    await fetchJson<void>(`/api/v1/admin/namespace-applications/${id}/reject`, {
       method: 'POST',
       headers: getCsrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ comment }),

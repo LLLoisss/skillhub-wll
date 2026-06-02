@@ -63,6 +63,18 @@ export function useCreateNamespace() {
   })
 }
 
+export function useApplyForNamespace() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (request: CreateNamespaceRequest) => namespaceApi.apply(request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['namespaces', 'my'] })
+      queryClient.invalidateQueries({ queryKey: ['namespaces'] })
+    },
+  })
+}
+
 export function useNamespaceDetail(slug: string) {
   return useQuery({
     queryKey: ['namespaces', slug],

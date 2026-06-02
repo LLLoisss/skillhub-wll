@@ -98,8 +98,23 @@ export interface MergeConfirmRequest {
 }
 
 // Namespace types
-export type NamespaceStatus = 'ACTIVE' | 'FROZEN' | 'ARCHIVED' | string
+export type NamespaceStatus = 'ACTIVE' | 'FROZEN' | 'ARCHIVED' | 'PENDING_REVIEW' | string
 export type NamespaceRole = 'OWNER' | 'ADMIN' | 'MEMBER' | string
+
+export interface NamespaceApplicationItem {
+  id: number
+  slug: string
+  displayName: string
+  description?: string
+  applicantId: string
+  applicantName?: string
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  reviewerId?: string
+  reviewerName?: string
+  reviewComment?: string
+  appliedAt: string
+  reviewedAt?: string
+}
 
 export interface Namespace {
   id: number

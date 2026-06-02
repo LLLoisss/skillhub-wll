@@ -19,6 +19,7 @@ import { DashboardPageHeader } from '@/shared/components/dashboard-page-header'
 import { Pagination } from '@/shared/components/pagination'
 import { formatLocalDateTime } from '@/shared/lib/date-time'
 import { ProfileReviewTable } from './profile-review-table'
+import { NamespaceReviewTable } from './namespace-review-table'
 
 type ReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 type TimeSortDirection = 'ASC' | 'DESC'
@@ -230,6 +231,14 @@ export function ReviewsPage() {
             >
               {t('reviews.typeProfile')}
             </TabsTrigger>
+            {isSkillAdmin && (
+              <TabsTrigger
+                value="namespace"
+                className="mb-0 rounded-xl border-b-0 px-5 py-3 text-base font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground"
+              >
+                {t('reviews.typeNamespace')}
+              </TabsTrigger>
+            )}
           </TabsList>
           <TabsContent value="skill" className="mt-6">
             {renderSkillReviewContent()}
@@ -237,9 +246,35 @@ export function ReviewsPage() {
           <TabsContent value="profile" className="mt-6">
             <ProfileReviewTable />
           </TabsContent>
+          {isSkillAdmin && (
+            <TabsContent value="namespace" className="mt-6">
+              <NamespaceReviewTable />
+            </TabsContent>
+          )}
         </Tabs>
       ) : isSkillAdmin ? (
-        renderSkillReviewContent()
+        <Tabs defaultValue="skill">
+          <TabsList className="gap-2 rounded-2xl border-b-0 bg-muted/80 p-1 shadow-sm">
+            <TabsTrigger
+              value="skill"
+              className="mb-0 rounded-xl border-b-0 px-5 py-3 text-base font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground"
+            >
+              {t('reviews.typeSkill')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="namespace"
+              className="mb-0 rounded-xl border-b-0 px-5 py-3 text-base font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground"
+            >
+              {t('reviews.typeNamespace')}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="skill" className="mt-6">
+            {renderSkillReviewContent()}
+          </TabsContent>
+          <TabsContent value="namespace" className="mt-6">
+            <NamespaceReviewTable />
+          </TabsContent>
+        </Tabs>
       ) : isUserAdmin ? (
         <ProfileReviewTable />
       ) : null}

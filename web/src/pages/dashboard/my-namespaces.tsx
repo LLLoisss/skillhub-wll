@@ -27,7 +27,7 @@ export function MyNamespacesPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { hasRole } = useAuth()
-  const canCreateNamespace = hasRole('SKILL_ADMIN') || hasRole('SUPER_ADMIN')
+  const canDirectCreate = hasRole('SKILL_ADMIN') || hasRole('SUPER_ADMIN')
   const [pendingAction, setPendingAction] = useState<PendingNamespaceAction | null>(null)
   const { data: namespaces, isLoading } = useMyNamespaces()
   const freezeMutation = useFreezeNamespace()
@@ -35,7 +35,11 @@ export function MyNamespacesPage() {
   const archiveMutation = useArchiveNamespace()
   const restoreMutation = useRestoreNamespace()
 
-  const handleNamespaceClick = (slug: string) => {
+  const handleNamespaceClick = (slug: string, status: string) => {
+    if (status === 'PENDING_REVIEW') {
+      toast.info(t('myNamespaces.pendingReviewClickHint'))
+      return
+    }
     navigate({ to: `/space/${encodeURIComponent(slug)}` })
   }
 
@@ -56,6 +60,9 @@ export function MyNamespacesPage() {
     if (status === 'ARCHIVED') {
       return t('namespaceStatus.archived')
     }
+    if (status === 'PENDING_REVIEW') {
+      return t('namespaceStatus.pendingReview')
+    }
     return t('namespaceStatus.active')
   }
 
@@ -65,6 +72,9 @@ export function MyNamespacesPage() {
     }
     if (status === 'ARCHIVED') {
       return 'bg-slate-500/10 text-slate-500 border-slate-500/20'
+    }
+    if (status === 'PENDING_REVIEW') {
+      return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
     }
     return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
   }
@@ -78,6 +88,9 @@ export function MyNamespacesPage() {
     }
     if (status === 'ARCHIVED') {
       return t('myNamespaces.archivedHint')
+    }
+    if (status === 'PENDING_REVIEW') {
+      return t('myNamespaces.pendingReviewHint')
     }
     return t('myNamespaces.activeHint')
   }
@@ -172,11 +185,17 @@ export function MyNamespacesPage() {
       <DashboardPageHeader
         title={t('myNamespaces.title')}
         subtitle={t('myNamespaces.subtitle')}
-        actions={canCreateNamespace ? (
-          <CreateNamespaceDialog>
-            <Button>{t('myNamespaces.create')}</Button>
-          </CreateNamespaceDialog>
-        ) : undefined}
+        actions={
+          canDirectCreate ? (
+            <CreateNamespaceDialog>
+              <Button>{t('myNamespaces.create')}</Button>
+            </CreateNamespaceDialog>
+          ) : (
+            <CreateNamespaceDialog mode="apply">
+              <Button>{t('myNamespaces.apply')}</Button>
+            </CreateNamespaceDialog>
+          )
+        }
       />
 
       {namespaces && namespaces.length > 0 ? (
@@ -184,8 +203,8 @@ export function MyNamespacesPage() {
           {namespaces.map((namespace, idx) => (
             <Card
               key={namespace.id}
-              className={`p-6 cursor-pointer group animate-fade-up delay-${Math.min(idx + 1, 6)}`}
-              onClick={() => handleNamespaceClick(namespace.slug)}
+              className={`p-6 group animate-fade-up delay-${Math.min(idx + 1, 6)} ${namespace.status === 'PENDING_REVIEW' ? 'opacity-75' : 'cursor-pointer'}`}
+              onClick={() => handleNamespaceClick(namespace.slug, namespace.status)}
             >
               <div className="space-y-4">
                 <div className="flex items-start justify-between">
@@ -217,7 +236,7 @@ export function MyNamespacesPage() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {namespace.type === 'TEAM' && (
+                  {namespace.status !== 'PENDING_REVIEW' && namespace.type === 'TEAM' && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -226,14 +245,16 @@ export function MyNamespacesPage() {
                       {t('myNamespaces.manageMembers')}
                     </Button>
                   )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => handleReviewsClick(namespace.slug, e)}
-                  >
-                    {t('myNamespaces.reviewTasks')}
-                  </Button>
-                  {namespace.canFreeze && (
+                  {namespace.status !== 'PENDING_REVIEW' && namespace.canFreeze && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => handleReviewsClick(namespace.slug, e)}
+                    >
+                      {t('myNamespaces.reviewTasks')}
+                    </Button>
+                  )}
+                  {namespace.status !== 'PENDING_REVIEW' && namespace.canFreeze && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -245,7 +266,7 @@ export function MyNamespacesPage() {
                       {t('myNamespaces.freeze')}
                     </Button>
                   )}
-                  {namespace.canUnfreeze && (
+                  {namespace.status !== 'PENDING_REVIEW' && namespace.canUnfreeze && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -257,7 +278,7 @@ export function MyNamespacesPage() {
                       {t('myNamespaces.unfreeze')}
                     </Button>
                   )}
-                  {namespace.canArchive && (
+                  {namespace.status !== 'PENDING_REVIEW' && namespace.canArchive && (
                     <Button
                       variant="destructive"
                       size="sm"
@@ -269,7 +290,7 @@ export function MyNamespacesPage() {
                       {t('myNamespaces.archive')}
                     </Button>
                   )}
-                  {namespace.canRestore && (
+                  {namespace.status !== 'PENDING_REVIEW' && namespace.canRestore && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -290,11 +311,17 @@ export function MyNamespacesPage() {
         <EmptyState
           title={t('myNamespaces.emptyTitle')}
           description={t('myNamespaces.emptyDescription')}
-          action={(
-            <CreateNamespaceDialog>
-              <Button>{t('myNamespaces.create')}</Button>
-            </CreateNamespaceDialog>
-          )}
+          action={
+            canDirectCreate ? (
+              <CreateNamespaceDialog>
+                <Button>{t('myNamespaces.create')}</Button>
+              </CreateNamespaceDialog>
+            ) : (
+              <CreateNamespaceDialog mode="apply">
+                <Button>{t('myNamespaces.apply')}</Button>
+              </CreateNamespaceDialog>
+            )
+          }
         />
       )}
 

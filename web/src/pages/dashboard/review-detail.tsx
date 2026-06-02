@@ -19,6 +19,7 @@ import type { FileTreeNode } from '@/features/skill/file-tree-builder'
 import { useReviewFile } from '@/features/review/use-review-file'
 import { buildApiUrl, WEB_API_PREFIX } from '@/api/client'
 import { useReviewDetail, useReviewSkillDetail, useApproveReview, useRejectReview } from '@/features/review/use-review-detail'
+import { useAuth } from '@/features/auth/use-auth'
 
 /**
  * Review task detail page for moderators. The route owns the approve/reject
@@ -29,9 +30,19 @@ export function ReviewDetailPage() {
   const { id } = useParams({ from: '/dashboard/reviews/$id' })
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
+  const { user } = useAuth()
   const taskId = Number(id)
 
   const { data: review, isLoading } = useReviewDetail(taskId)
+
+  const PLATFORM_REVIEW_ROLES = ['SKILL_ADMIN', 'NAMESPACE_ADMIN', 'USER_ADMIN', 'SUPER_ADMIN']
+  const hasPlatformReviewRole = user?.platformRoles?.some((r) => PLATFORM_REVIEW_ROLES.includes(r)) ?? false
+
+  const getReturnPath = () => {
+    if (hasPlatformReviewRole) return '/dashboard/reviews'
+    if (review?.namespace) return `/dashboard/namespaces/${encodeURIComponent(review.namespace)}/reviews`
+    return '/dashboard'
+  }
   const {
     data: reviewSkillDetail,
     isLoading: isLoadingReviewSkillDetail,
@@ -40,7 +51,7 @@ export function ReviewDetailPage() {
   const approveMutation = useApproveReview({
     onSuccess: () => {
       toast.success(t('review.approveSuccess'))
-      navigate({ to: '/dashboard/reviews' })
+      navigate({ to: getReturnPath() })
     },
     onError: (error) => {
       toast.error(t('review.approveFailed'), resolveReviewActionErrorDescription(error))
@@ -49,7 +60,7 @@ export function ReviewDetailPage() {
   const rejectMutation = useRejectReview({
     onSuccess: () => {
       toast.success(t('review.rejectSuccess'))
-      navigate({ to: '/dashboard/reviews' })
+      navigate({ to: getReturnPath() })
     },
     onError: (error) => {
       toast.error(t('review.rejectFailed'), resolveReviewActionErrorDescription(error))
@@ -126,6 +137,8 @@ export function ReviewDetailPage() {
     (version) => version.version === reviewSkillDetail.activeVersion
   )
   const isApprovalBlockedByScanning = activeReviewVersion?.status === 'SCANNING'
+  const isSuperAdmin = user?.platformRoles?.includes('SUPER_ADMIN') ?? false
+  const isSelfReview = !!review && !!user && review.submittedBy === user.userId && !isSuperAdmin
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 animate-fade-up">
@@ -136,7 +149,7 @@ export function ReviewDetailPage() {
           <h1 className="text-4xl font-bold font-heading mb-2">{t('review.detail')}</h1>
           <p className="text-muted-foreground">{t('review.id')}: {review.id}</p>
         </div>
-        <Button variant="outline" onClick={() => navigate({ to: '/dashboard/reviews' })}>
+        <Button variant="outline" onClick={() => navigate({ to: getReturnPath() })}>
           {t('review.backToList')}
         </Button>
       </div>
@@ -202,6 +215,11 @@ export function ReviewDetailPage() {
       </Card>
 
       {review.status === 'PENDING' && (
+        isSelfReview ? (
+          <Card className="p-8">
+            <p className="text-sm text-muted-foreground">{t('review.selfReviewBlocked')}</p>
+          </Card>
+        ) : (
         <Card className="p-8 space-y-6">
           <h2 className="text-xl font-bold font-heading">{t('review.actions')}</h2>
 
@@ -270,6 +288,7 @@ export function ReviewDetailPage() {
             <p className="text-sm text-destructive">{t('review.rejectReasonRequired')}</p>
           )}
         </Card>
+        )
       )}
 
       {(() => {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CreateNamespaceRequest } from '@/api/types'
-import { useCreateNamespace } from '@/shared/hooks/use-namespace-queries'
+import { useApplyForNamespace, useCreateNamespace } from '@/shared/hooks/use-namespace-queries'
 import { toast } from '@/shared/lib/toast'
 import { Button } from '@/shared/ui/button'
 import {
@@ -19,6 +19,7 @@ import { Textarea } from '@/shared/ui/textarea'
 
 interface CreateNamespaceDialogProps {
   children: React.ReactNode
+  mode?: 'create' | 'apply'
 }
 
 type FieldErrors = {
@@ -85,10 +86,13 @@ function buildFieldErrors(request: CreateNamespaceRequest, t: (key: string, opti
  * Collects and validates namespace creation input before delegating the actual
  * mutation to the shared query layer. The dialog owns normalization because the
  * same slug/display-name constraints are also reflected in the local UI copy.
+ * In 'apply' mode, the same form submits an application for admin review.
  */
-export function CreateNamespaceDialog({ children }: CreateNamespaceDialogProps) {
+export function CreateNamespaceDialog({ children, mode = 'create' }: CreateNamespaceDialogProps) {
   const { t } = useTranslation()
   const createMutation = useCreateNamespace()
+  const applyMutation = useApplyForNamespace()
+  const activeMutation = mode === 'apply' ? applyMutation : createMutation
   const [open, setOpen] = useState(false)
   const [slug, setSlug] = useState('')
   const [displayName, setDisplayName] = useState('')
@@ -100,7 +104,7 @@ export function CreateNamespaceDialog({ children }: CreateNamespaceDialogProps) 
     setDisplayName('')
     setDescription('')
     setErrors({})
-    createMutation.reset()
+    activeMutation.reset()
   }
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -124,14 +128,25 @@ export function CreateNamespaceDialog({ children }: CreateNamespaceDialogProps) 
     }
 
     try {
-      const namespace = await createMutation.mutateAsync(normalizedRequest)
-      toast.success(
-        t('myNamespaces.createSuccessTitle'),
-        t('myNamespaces.createSuccessDescription', { name: namespace.displayName }),
-      )
+      if (mode === 'apply') {
+        await applyMutation.mutateAsync(normalizedRequest)
+        toast.success(
+          t('myNamespaces.applySuccessTitle'),
+          t('myNamespaces.applySuccessDescription', { name: normalizedRequest.displayName }),
+        )
+      } else {
+        const namespace = await createMutation.mutateAsync(normalizedRequest)
+        toast.success(
+          t('myNamespaces.createSuccessTitle'),
+          t('myNamespaces.createSuccessDescription', { name: namespace.displayName }),
+        )
+      }
       handleOpenChange(false)
     } catch (error) {
-      toast.error(t('myNamespaces.createErrorTitle'), error instanceof Error ? error.message : '')
+      toast.error(
+        mode === 'apply' ? t('myNamespaces.applyErrorTitle') : t('myNamespaces.createErrorTitle'),
+        error instanceof Error ? error.message : '',
+      )
     }
   }
 
@@ -144,9 +159,11 @@ export function CreateNamespaceDialog({ children }: CreateNamespaceDialogProps) 
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader className="text-center sm:text-center">
-          <DialogTitle className="text-center">{t('myNamespaces.createDialogTitle')}</DialogTitle>
+          <DialogTitle className="text-center">
+            {mode === 'apply' ? t('myNamespaces.applyDialogTitle') : t('myNamespaces.createDialogTitle')}
+          </DialogTitle>
           <DialogDescription className="text-center">
-            {t('myNamespaces.createDialogDescription')}
+            {mode === 'apply' ? t('myNamespaces.applyDialogDescription') : t('myNamespaces.createDialogDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -230,16 +247,20 @@ export function CreateNamespaceDialog({ children }: CreateNamespaceDialogProps) 
           </div>
         </div>
 
-        {createMutation.error ? (
-          <p className="text-sm text-red-600">{createMutation.error.message}</p>
+        {activeMutation.error ? (
+          <p className="text-sm text-red-600">{activeMutation.error.message}</p>
         ) : null}
 
         <DialogFooter className="sm:justify-center sm:space-x-3">
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
             {t('dialog.cancel')}
           </Button>
-          <Button onClick={handleSubmit} disabled={createMutation.isPending}>
-            {createMutation.isPending ? t('myNamespaces.creating') : t('myNamespaces.createSubmit')}
+          <Button onClick={handleSubmit} disabled={activeMutation.isPending}>
+            {activeMutation.isPending
+              ? t('myNamespaces.creating')
+              : mode === 'apply'
+                ? t('myNamespaces.applySubmit')
+                : t('myNamespaces.createSubmit')}
           </Button>
         </DialogFooter>
       </DialogContent>

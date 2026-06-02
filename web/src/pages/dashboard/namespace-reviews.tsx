@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { formatLocalDateTime } from '@/shared/lib/date-time'
 import { Card } from '@/shared/ui/card'
@@ -17,6 +17,7 @@ const PAGE_SIZE = 10
 
 function ReviewListSection({ namespaceId }: { namespaceId?: number }) {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const [pages, setPages] = useState<Record<ReviewStatus, number>>({
     PENDING: 0,
     APPROVED: 0,
@@ -74,7 +75,11 @@ function ReviewListSection({ namespaceId }: { namespaceId?: number }) {
     return (
       <Card className="overflow-hidden divide-y divide-border/40">
         {list.map((review) => (
-          <div key={review.id} className="p-5">
+          <div
+            key={review.id}
+            className="p-5 cursor-pointer hover:bg-secondary/40 transition-colors"
+            onClick={() => navigate({ to: '/dashboard/reviews/$id', params: { id: String(review.id) } })}
+          >
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="font-semibold font-heading">{review.namespace}/{review.skillSlug}</div>
@@ -151,7 +156,7 @@ export function NamespaceReviewsPage() {
           {readOnlyMessage}
         </Card>
       ) : null}
-      <ReviewListSection namespaceId={namespace?.id} />
+      {namespace ? <ReviewListSection namespaceId={namespace.id} /> : null}
     </div>
   )
 }
