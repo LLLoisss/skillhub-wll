@@ -464,7 +464,9 @@
     "applySuccessDescription": "命名空间\"{{name}}\"的申请已提交，等待管理员审核。",
     "applyErrorTitle": "申请命名空间失败",
     "pendingReviewHint": "命名空间申请已提交，正在等待平台管理员审核。审核通过后即可正常使用。",
-    "pendingReviewClickHint": "命名空间正在审核中，请稍后刷新再试！"
+    "pendingReviewClickHint": "命名空间正在审核中，请稍后刷新再试！",
+    "rejectedHint": "该命名空间申请已被管理员拒绝。你可以修改信息后再次申请。",
+    "rejectedClickHint": "该命名空间申请已被拒绝，无法进入详情。请重新提交申请。"
   },
   "tokens": {
     "pageTitle": "Token 管理",
@@ -1138,6 +1140,7 @@
     "frozen": "已冻结",
     "archived": "已归档",
     "pendingReview": "审核中",
+    "rejected": "已拒绝",
     "frozenHint": "命名空间当前为只读状态，不能继续发布、审核或调整成员。",
     "archivedHint": "命名空间已从公开入口隐藏，仅管理台成员可见并可恢复。",
     "immutableHint": "系统内置命名空间，不允许任何治理或成员修改操作。"

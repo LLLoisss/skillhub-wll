@@ -464,7 +464,9 @@
     "applySuccessDescription": "Your namespace application for \"{{name}}\" has been submitted and is awaiting admin review.",
     "applyErrorTitle": "Failed to apply for namespace",
     "pendingReviewHint": "Your namespace application has been submitted and is awaiting platform admin review. You can use it once approved.",
-    "pendingReviewClickHint": "This namespace is under review. Please refresh and try again later."
+    "pendingReviewClickHint": "This namespace is under review. Please refresh and try again later.",
+    "rejectedHint": "This namespace application was rejected by an admin. You can edit the information and apply again.",
+    "rejectedClickHint": "This namespace application was rejected and cannot be opened. Please submit a new application."
   },
   "tokens": {
     "pageTitle": "Token Management",
@@ -1137,6 +1139,7 @@
     "frozen": "Frozen",
     "archived": "Archived",
     "pendingReview": "Pending Review",
+    "rejected": "Rejected",
     "frozenHint": "This namespace is currently read-only and cannot publish, review, or change members.",
     "archivedHint": "This namespace is hidden from public entry points and only visible to dashboard members.",
     "immutableHint": "This is a built-in system namespace and does not allow governance or membership changes."

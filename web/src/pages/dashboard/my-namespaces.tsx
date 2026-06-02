@@ -35,9 +35,15 @@ export function MyNamespacesPage() {
   const archiveMutation = useArchiveNamespace()
   const restoreMutation = useRestoreNamespace()
 
+  const isApplicationStatus = (status: string) => status === 'PENDING_REVIEW' || status === 'REJECTED'
+
   const handleNamespaceClick = (slug: string, status: string) => {
     if (status === 'PENDING_REVIEW') {
       toast.info(t('myNamespaces.pendingReviewClickHint'))
+      return
+    }
+    if (status === 'REJECTED') {
+      toast.info(t('myNamespaces.rejectedClickHint'))
       return
     }
     navigate({ to: `/space/${encodeURIComponent(slug)}` })
@@ -63,6 +69,9 @@ export function MyNamespacesPage() {
     if (status === 'PENDING_REVIEW') {
       return t('namespaceStatus.pendingReview')
     }
+    if (status === 'REJECTED') {
+      return t('namespaceStatus.rejected')
+    }
     return t('namespaceStatus.active')
   }
 
@@ -75,6 +84,9 @@ export function MyNamespacesPage() {
     }
     if (status === 'PENDING_REVIEW') {
       return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+    }
+    if (status === 'REJECTED') {
+      return 'bg-rose-500/10 text-rose-500 border-rose-500/20'
     }
     return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
   }
@@ -91,6 +103,9 @@ export function MyNamespacesPage() {
     }
     if (status === 'PENDING_REVIEW') {
       return t('myNamespaces.pendingReviewHint')
+    }
+    if (status === 'REJECTED') {
+      return t('myNamespaces.rejectedHint')
     }
     return t('myNamespaces.activeHint')
   }
@@ -203,7 +218,7 @@ export function MyNamespacesPage() {
           {namespaces.map((namespace, idx) => (
             <Card
               key={namespace.id}
-              className={`p-6 group animate-fade-up delay-${Math.min(idx + 1, 6)} ${namespace.status === 'PENDING_REVIEW' ? 'opacity-75' : 'cursor-pointer'}`}
+              className={`p-6 group animate-fade-up delay-${Math.min(idx + 1, 6)} ${isApplicationStatus(namespace.status) ? 'opacity-75' : 'cursor-pointer'}`}
               onClick={() => handleNamespaceClick(namespace.slug, namespace.status)}
             >
               <div className="space-y-4">
@@ -236,7 +251,7 @@ export function MyNamespacesPage() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {namespace.status !== 'PENDING_REVIEW' && namespace.type === 'TEAM' && (
+                  {!isApplicationStatus(namespace.status) && namespace.type === 'TEAM' && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -245,7 +260,7 @@ export function MyNamespacesPage() {
                       {t('myNamespaces.manageMembers')}
                     </Button>
                   )}
-                  {namespace.status !== 'PENDING_REVIEW' && namespace.canFreeze && (
+                  {!isApplicationStatus(namespace.status) && namespace.canFreeze && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -254,7 +269,7 @@ export function MyNamespacesPage() {
                       {t('myNamespaces.reviewTasks')}
                     </Button>
                   )}
-                  {namespace.status !== 'PENDING_REVIEW' && namespace.canFreeze && (
+                  {!isApplicationStatus(namespace.status) && namespace.canFreeze && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -266,7 +281,7 @@ export function MyNamespacesPage() {
                       {t('myNamespaces.freeze')}
                     </Button>
                   )}
-                  {namespace.status !== 'PENDING_REVIEW' && namespace.canUnfreeze && (
+                  {!isApplicationStatus(namespace.status) && namespace.canUnfreeze && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -278,7 +293,7 @@ export function MyNamespacesPage() {
                       {t('myNamespaces.unfreeze')}
                     </Button>
                   )}
-                  {namespace.status !== 'PENDING_REVIEW' && namespace.canArchive && (
+                  {!isApplicationStatus(namespace.status) && namespace.canArchive && (
                     <Button
                       variant="destructive"
                       size="sm"
@@ -290,7 +305,7 @@ export function MyNamespacesPage() {
                       {t('myNamespaces.archive')}
                     </Button>
                   )}
-                  {namespace.status !== 'PENDING_REVIEW' && namespace.canRestore && (
+                  {!isApplicationStatus(namespace.status) && namespace.canRestore && (
                     <Button
                       variant="outline"
                       size="sm"
