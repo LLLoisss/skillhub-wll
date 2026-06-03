@@ -89,12 +89,12 @@ export function DashboardPage() {
             {t('dashboard.openMySkills')}
           </Link>
         </Card>
-        <Card className="p-5">
+        {/* <Card className="p-5">
           <div className="text-sm text-muted-foreground">{t('dashboard.credentials')}</div>
           <Link to="/dashboard/tokens" className="mt-2 inline-block font-semibold text-primary hover:underline">
             {t('dashboard.openTokens')}
           </Link>
-        </Card>
+        </Card> */}
         {governanceVisible ? (
           <Card className="p-5">
             <div className="text-sm text-muted-foreground">{t('dashboard.governanceTitle')}</div>
@@ -165,9 +165,9 @@ export function DashboardPage() {
           </Card>
         </div>
 
-        <div className="space-y-4">
+        {/* <div className="space-y-4">
           <TokenList />
-        </div>
+        </div> */}
       </div>
     </div>
   )
