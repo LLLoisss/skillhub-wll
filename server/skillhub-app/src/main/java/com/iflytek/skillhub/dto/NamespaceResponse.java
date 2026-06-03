@@ -1,7 +1,7 @@
 package com.iflytek.skillhub.dto;
 
 import com.iflytek.skillhub.domain.namespace.Namespace;
-import com.iflytek.skillhub.domain.namespace.NamespaceStatus;
+import com.iflytek.skillhub.domain.namespace.NamespaceApplication;
 import com.iflytek.skillhub.domain.namespace.NamespaceType;
 
 import java.time.Instant;
@@ -10,7 +10,7 @@ public record NamespaceResponse(
         Long id,
         String slug,
         String displayName,
-        NamespaceStatus status,
+        String status,
         String description,
         NamespaceType type,
         String avatarUrl,
@@ -23,13 +23,29 @@ public record NamespaceResponse(
                 namespace.getId(),
                 namespace.getSlug(),
                 namespace.getDisplayName(),
-                namespace.getStatus(),
+                namespace.getStatus().name(),
                 namespace.getDescription(),
                 namespace.getType(),
                 namespace.getAvatarUrl(),
                 namespace.getCreatedBy(),
                 namespace.getCreatedAt(),
                 namespace.getUpdatedAt()
+        );
+    }
+
+    /** Build a response for a pending namespace application (status = PENDING_REVIEW). */
+    public static NamespaceResponse fromApplication(NamespaceApplication application) {
+        return new NamespaceResponse(
+                application.getId(),
+                application.getSlug(),
+                application.getDisplayName(),
+                "PENDING_REVIEW",
+                application.getDescription(),
+                NamespaceType.TEAM,
+                null,
+                application.getApplicantId(),
+                application.getAppliedAt(),
+                application.getAppliedAt()
         );
     }
 }

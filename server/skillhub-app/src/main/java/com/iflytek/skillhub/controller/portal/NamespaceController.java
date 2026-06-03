@@ -63,7 +63,7 @@ public class NamespaceController extends BaseApiController {
     public ApiResponse<List<MyNamespaceResponse>> listMyNamespaces(
             @RequestAttribute("userId") String userId,
             @RequestAttribute(value = "userNsRoles", required = false) Map<Long, NamespaceRole> userNsRoles) {
-        return ok("response.success.read", namespacePortalQueryAppService.listMyNamespaces(userNsRoles));
+        return ok("response.success.read", namespacePortalQueryAppService.listMyNamespaces(userId, userNsRoles));
     }
 
     @GetMapping("/namespaces/{slug}")
@@ -80,6 +80,14 @@ public class NamespaceController extends BaseApiController {
             @AuthenticationPrincipal PlatformPrincipal principal) {
         return ok("response.success.created",
                 namespacePortalCommandAppService.createNamespace(request, principal));
+    }
+
+    @PostMapping("/namespaces/apply")
+    public ApiResponse<NamespaceResponse> applyForNamespace(
+            @Valid @RequestBody NamespaceRequest request,
+            @RequestAttribute("userId") String userId) {
+        return ok("response.success.created",
+                namespacePortalCommandAppService.applyForNamespace(request, userId));
     }
 
     @PutMapping("/namespaces/{slug}")

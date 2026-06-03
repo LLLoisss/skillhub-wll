@@ -103,6 +103,10 @@ public class SecurityAuditController extends BaseApiController {
             return true;
         }
         Map<Long, NamespaceRole> namespaceRoles = userNsRoles != null ? userNsRoles : Map.of();
+        NamespaceRole nsRole = namespaceRoles.get(skill.getNamespaceId());
+        if (nsRole == NamespaceRole.OWNER || nsRole == NamespaceRole.ADMIN) {
+            return true;
+        }
         return visibilityChecker.canAccess(skill, principal.userId(), namespaceRoles);
     }
 

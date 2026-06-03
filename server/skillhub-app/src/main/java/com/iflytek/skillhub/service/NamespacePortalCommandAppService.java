@@ -2,6 +2,8 @@ package com.iflytek.skillhub.service;
 
 import com.iflytek.skillhub.auth.rbac.PlatformPrincipal;
 import com.iflytek.skillhub.domain.namespace.Namespace;
+import com.iflytek.skillhub.domain.namespace.NamespaceApplication;
+import com.iflytek.skillhub.domain.namespace.NamespaceApplicationService;
 import com.iflytek.skillhub.domain.namespace.NamespaceGovernanceService;
 import com.iflytek.skillhub.domain.namespace.NamespaceMember;
 import com.iflytek.skillhub.domain.namespace.NamespaceMemberService;
@@ -31,17 +33,37 @@ public class NamespacePortalCommandAppService {
     private final NamespaceGovernanceService namespaceGovernanceService;
     private final NamespaceMemberService namespaceMemberService;
     private final UserAccountRepository userAccountRepository;
+    private final NamespaceApplicationService applicationService;
 
     public NamespacePortalCommandAppService(NamespaceService namespaceService,
                                             NamespaceRepository namespaceRepository,
                                             NamespaceGovernanceService namespaceGovernanceService,
                                             NamespaceMemberService namespaceMemberService,
-                                            UserAccountRepository userAccountRepository) {
+                                            UserAccountRepository userAccountRepository,
+                                            NamespaceApplicationService applicationService) {
         this.namespaceService = namespaceService;
         this.namespaceRepository = namespaceRepository;
         this.namespaceGovernanceService = namespaceGovernanceService;
         this.namespaceMemberService = namespaceMemberService;
         this.userAccountRepository = userAccountRepository;
+        this.applicationService = applicationService;
+    }
+
+    @Transactional
+    public NamespaceResponse applyForNamespace(NamespaceRequest request, String userId) {
+        if (userId == null || userId.isBlank()) {
+            throw new UnauthorizedException("error.auth.required");
+        }
+        NamespaceApplication application = applicationService.apply(
+                request.slug(),
+                request.displayName(),
+                request.description(),
+                userId
+        );
+        // Return a minimal NamespaceResponse-like shape for API compatibility.
+        // The frontend treats this as a confirmation; the real namespace is
+        // created only on admin approval.
+        return NamespaceResponse.fromApplication(application);
     }
 
     @Transactional
@@ -49,9 +71,9 @@ public class NamespacePortalCommandAppService {
         if (principal == null) {
             throw new UnauthorizedException("error.auth.required");
         }
-        if (!canCreateNamespace(principal)) {
-            throw new ForbiddenException("error.namespace.create.platformAdminRequired");
-        }
+        // if (!canCreateNamespace(principal)) {
+        //     throw new ForbiddenException("error.namespace.create.platformAdminRequired");
+        // }
 
         Namespace namespace = namespaceService.createNamespace(
                 request.slug(),

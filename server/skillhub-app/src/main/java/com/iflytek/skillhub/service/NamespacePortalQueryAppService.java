@@ -2,6 +2,9 @@ package com.iflytek.skillhub.service;
 
 import com.iflytek.skillhub.domain.namespace.Namespace;
 import com.iflytek.skillhub.domain.namespace.NamespaceAccessPolicy;
+import com.iflytek.skillhub.domain.namespace.NamespaceApplication;
+import com.iflytek.skillhub.domain.namespace.NamespaceApplicationRepository;
+import com.iflytek.skillhub.domain.namespace.NamespaceApplicationStatus;
 import com.iflytek.skillhub.domain.namespace.NamespaceMember;
 import com.iflytek.skillhub.domain.namespace.NamespaceMemberService;
 import com.iflytek.skillhub.domain.namespace.NamespaceRepository;
@@ -14,6 +17,7 @@ import com.iflytek.skillhub.dto.MemberResponse;
 import com.iflytek.skillhub.dto.MyNamespaceResponse;
 import com.iflytek.skillhub.dto.NamespaceResponse;
 import com.iflytek.skillhub.dto.PageResponse;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -36,17 +40,20 @@ public class NamespacePortalQueryAppService {
     private final NamespaceMemberService namespaceMemberService;
     private final NamespaceAccessPolicy namespaceAccessPolicy;
     private final UserAccountRepository userAccountRepository;
+    private final NamespaceApplicationRepository applicationRepository;
 
     public NamespacePortalQueryAppService(NamespaceRepository namespaceRepository,
                                           NamespaceService namespaceService,
                                           NamespaceMemberService namespaceMemberService,
                                           NamespaceAccessPolicy namespaceAccessPolicy,
-                                          UserAccountRepository userAccountRepository) {
+                                          UserAccountRepository userAccountRepository,
+                                          NamespaceApplicationRepository applicationRepository) {
         this.namespaceRepository = namespaceRepository;
         this.namespaceService = namespaceService;
         this.namespaceMemberService = namespaceMemberService;
         this.namespaceAccessPolicy = namespaceAccessPolicy;
         this.userAccountRepository = userAccountRepository;
+        this.applicationRepository = applicationRepository;
     }
 
     @Transactional(readOnly = true)
@@ -56,19 +63,43 @@ public class NamespacePortalQueryAppService {
     }
 
     @Transactional(readOnly = true)
-    public List<MyNamespaceResponse> listMyNamespaces(Map<Long, NamespaceRole> userNamespaceRoles) {
+    public List<MyNamespaceResponse> listMyNamespaces(String userId,
+                                                      Map<Long, NamespaceRole> userNamespaceRoles) {
         Map<Long, NamespaceRole> namespaceRoles = userNamespaceRoles != null ? userNamespaceRoles : Map.of();
-        if (namespaceRoles.isEmpty()) {
-            return List.of();
+
+        // 1. Real namespaces the user is a member of
+        List<MyNamespaceResponse> namespaceItems = namespaceRoles.isEmpty()
+                ? List.of()
+                : namespaceRepository.findByIdIn(namespaceRoles.keySet().stream().toList()).stream()
+                        .sorted(Comparator.comparing(Namespace::getSlug))
+                        .map(ns -> MyNamespaceResponse.from(ns, namespaceRoles.get(ns.getId()), namespaceAccessPolicy))
+                        .toList();
+
+        // 2. Application items (pending + rejected) shown as synthetic cards
+        List<MyNamespaceResponse> pendingItems = applicationRepository
+            .findByApplicantIdAndStatus(userId, NamespaceApplicationStatus.PENDING)
+            .stream()
+            .sorted(Comparator.comparing(NamespaceApplication::getAppliedAt).reversed())
+            .map(MyNamespaceResponse::fromPendingApplication)
+            .toList();
+        List<MyNamespaceResponse> rejectedItems = applicationRepository
+            .findByApplicantIdAndStatus(userId, NamespaceApplicationStatus.REJECTED)
+            .stream()
+            .sorted(Comparator.comparing(NamespaceApplication::getReviewedAt,
+                Comparator.nullsLast(Comparator.reverseOrder())))
+            .map(MyNamespaceResponse::fromRejectedApplication)
+            .toList();
+
+        if (pendingItems.isEmpty() && rejectedItems.isEmpty()) {
+            return namespaceItems;
         }
 
-        return namespaceRepository.findByIdIn(namespaceRoles.keySet().stream().toList()).stream()
-                .sorted(Comparator.comparing(Namespace::getSlug))
-                .map(namespace -> MyNamespaceResponse.from(
-                        namespace,
-                        namespaceRoles.get(namespace.getId()),
-                        namespaceAccessPolicy))
-                .toList();
+        var combined = new ArrayList<MyNamespaceResponse>(
+            namespaceItems.size() + pendingItems.size() + rejectedItems.size());
+        combined.addAll(namespaceItems);
+        combined.addAll(pendingItems);
+        combined.addAll(rejectedItems);
+        return combined;
     }
 
     @Transactional(readOnly = true)
