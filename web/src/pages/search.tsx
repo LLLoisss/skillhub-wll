@@ -1,52 +1,52 @@
-import { startTransition, useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
-import { useTranslation } from 'react-i18next'
-import { Loader2 } from 'lucide-react'
-import type { SkillSummary } from '@/api/types'
-import { useAuth } from '@/features/auth/use-auth'
-import { SearchBar } from '@/features/search/search-bar'
-import { SkillCard } from '@/features/skill/skill-card'
-import { SkeletonList } from '@/shared/components/skeleton-loader'
-import { EmptyState } from '@/shared/components/empty-state'
-import { Pagination } from '@/shared/components/pagination'
-import { useSearchSkills } from '@/shared/hooks/use-skill-queries'
-import { useVisibleLabels } from '@/shared/hooks/use-label-queries'
-import { useMyStars } from '@/shared/hooks/use-user-queries'
-import { normalizeSearchQuery } from '@/shared/lib/search-query'
-import { Button } from '@/shared/ui/button'
-import { APP_SHELL_PAGE_CLASS_NAME } from '@/app/page-shell-style'
+import { startTransition, useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
+import type { SkillSummary } from '@/api/types';
+import { useAuth } from '@/features/auth/use-auth';
+import { SearchBar } from '@/features/search/search-bar';
+import { SkillCard } from '@/features/skill/skill-card';
+import { SkeletonList } from '@/shared/components/skeleton-loader';
+import { EmptyState } from '@/shared/components/empty-state';
+import { Pagination } from '@/shared/components/pagination';
+import { useSearchSkills } from '@/shared/hooks/use-skill-queries';
+import { useVisibleLabels } from '@/shared/hooks/use-label-queries';
+import { useMyStars } from '@/shared/hooks/use-user-queries';
+import { normalizeSearchQuery } from '@/shared/lib/search-query';
+import { Button } from '@/shared/ui/button';
+import { APP_SHELL_PAGE_CLASS_NAME } from '@/app/page-shell-style';
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 12;
 
 function blurActiveElement() {
   if (typeof document === 'undefined' || typeof HTMLElement === 'undefined') {
-    return
+    return;
   }
 
   if (document.activeElement instanceof HTMLElement) {
-    document.activeElement.blur()
+    document.activeElement.blur();
   }
 }
 
 function scrollToTopOnPageChange() {
   if (typeof window === 'undefined') {
-    return () => {}
+    return () => {};
   }
 
-  let secondFrame = 0
+  let secondFrame = 0;
   const firstFrame = window.requestAnimationFrame(() => {
-    window.scrollTo({ top: 0, behavior: 'auto' })
+    window.scrollTo({ top: 0, behavior: 'auto' });
     secondFrame = window.requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, behavior: 'auto' })
-    })
-  })
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    });
+  });
 
   return () => {
-    window.cancelAnimationFrame(firstFrame)
+    window.cancelAnimationFrame(firstFrame);
     if (secondFrame) {
-      window.cancelAnimationFrame(secondFrame)
+      window.cancelAnimationFrame(secondFrame);
     }
-  }
+  };
 }
 
 /**
@@ -55,61 +55,79 @@ function scrollToTopOnPageChange() {
  * Search text, sorting, pagination, and the starred-only filter are mirrored into router search
  * params so the page can be shared, restored, and revisited without losing state.
  */
-function filterStarredSkills(skills: SkillSummary[], query: string): SkillSummary[] {
-  const normalizedQuery = query.trim().toLowerCase()
+function filterStarredSkills(
+  skills: SkillSummary[],
+  query: string,
+): SkillSummary[] {
+  const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) {
-    return skills
+    return skills;
   }
 
   return skills.filter((skill) =>
     [skill.displayName, skill.summary, skill.namespace, skill.slug]
       .filter(Boolean)
-      .some((value) => value!.toLowerCase().includes(normalizedQuery))
-  )
+      .some((value) => value!.toLowerCase().includes(normalizedQuery)),
+  );
 }
 
-function sortStarredSkills(skills: SkillSummary[], sort: string): SkillSummary[] {
-  const sorted = [...skills]
+function sortStarredSkills(
+  skills: SkillSummary[],
+  sort: string,
+): SkillSummary[] {
+  const sorted = [...skills];
   if (sort === 'downloads') {
-    return sorted.sort((left, right) => right.downloadCount - left.downloadCount)
+    return sorted.sort(
+      (left, right) => right.downloadCount - left.downloadCount,
+    );
   }
   if (sort === 'newest' || sort === 'relevance') {
-    return sorted.sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
+    return sorted.sort(
+      (left, right) =>
+        new Date(right.updatedAt).getTime() -
+        new Date(left.updatedAt).getTime(),
+    );
   }
-  return sorted
+  return sorted;
 }
 
 export function SearchPage() {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const searchParams = useSearch({ strict: false }) as { q?: string; label?: string; sort?: string; page?: number; starredOnly?: boolean }
-  const { isAuthenticated } = useAuth()
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const searchParams = useSearch({ strict: false }) as {
+    q?: string;
+    label?: string;
+    sort?: string;
+    page?: number;
+    starredOnly?: boolean;
+  };
+  const { isAuthenticated } = useAuth();
 
-  const q = normalizeSearchQuery(searchParams.q || '')
-  const selectedLabel = searchParams.label || ''
-  const sort = searchParams.sort || 'newest'
-  const page = searchParams.page ?? 0
-  const starredOnly = searchParams.starredOnly ?? false
-  const [queryInput, setQueryInput] = useState(q)
-  const previousPageRef = useRef(page)
+  const q = normalizeSearchQuery(searchParams.q || '');
+  const selectedLabel = searchParams.label || '';
+  const sort = searchParams.sort || 'newest';
+  const page = searchParams.page ?? 0;
+  const starredOnly = searchParams.starredOnly ?? false;
+  const [queryInput, setQueryInput] = useState(q);
+  const previousPageRef = useRef(page);
 
   useEffect(() => {
-    setQueryInput(q)
-  }, [q])
+    setQueryInput(q);
+  }, [q]);
 
   useEffect(() => {
     if (previousPageRef.current !== page) {
-      blurActiveElement()
-      const cleanupScroll = scrollToTopOnPageChange()
+      blurActiveElement();
+      const cleanupScroll = scrollToTopOnPageChange();
 
-      previousPageRef.current = page
+      previousPageRef.current = page;
       return () => {
-        cleanupScroll()
-      }
+        cleanupScroll();
+      };
     }
 
-    previousPageRef.current = page
-  }, [page])
+    previousPageRef.current = page;
+  }, [page]);
 
   const { data, isLoading, isFetching } = useSearchSkills({
     q,
@@ -118,60 +136,93 @@ export function SearchPage() {
     page,
     size: PAGE_SIZE,
     starredOnly,
-  })
-  const { data: labels } = useVisibleLabels()
+  });
+  const { data: labels } = useVisibleLabels();
   const {
     data: starredSkills,
     isLoading: isLoadingStarred,
     isFetching: isFetchingStarred,
-  } = useMyStars(starredOnly && isAuthenticated)
-  const shouldShowGuidance = false
+  } = useMyStars(starredOnly && isAuthenticated);
+  const shouldShowGuidance = false;
 
   useEffect(() => {
     // Debounce URL updates while the user is typing so query state stays shareable without
     // triggering a navigation on every keystroke.
-    const normalizedQuery = normalizeSearchQuery(queryInput)
+    const normalizedQuery = normalizeSearchQuery(queryInput);
     if (normalizedQuery === q) {
-      return
+      return;
     }
 
     if (!normalizedQuery) {
       startTransition(() => {
-        navigate({ to: '/', search: { q: '', label: selectedLabel, sort, page: 0, starredOnly }, replace: page === 0 })
-      })
-      return
+        navigate({
+          to: '/',
+          search: { q: '', label: selectedLabel, sort, page: 0, starredOnly },
+          replace: page === 0,
+        });
+      });
+      return;
     }
 
     const timeoutId = window.setTimeout(() => {
       startTransition(() => {
-        navigate({ to: '/', search: { q: normalizedQuery, label: selectedLabel, sort, page: 0, starredOnly }, replace: true })
-      })
-    }, 250)
+        navigate({
+          to: '/',
+          search: {
+            q: normalizedQuery,
+            label: selectedLabel,
+            sort,
+            page: 0,
+            starredOnly,
+          },
+          replace: true,
+        });
+      });
+    }, 250);
 
-    return () => window.clearTimeout(timeoutId)
-  }, [navigate, page, q, queryInput, selectedLabel, sort, starredOnly])
+    return () => window.clearTimeout(timeoutId);
+  }, [navigate, page, q, queryInput, selectedLabel, sort, starredOnly]);
 
   const handleSearch = (query: string) => {
-    const normalizedQuery = normalizeSearchQuery(query)
-    setQueryInput(query)
+    const normalizedQuery = normalizeSearchQuery(query);
+    setQueryInput(query);
     startTransition(() => {
-      navigate({ to: '/', search: { q: normalizedQuery, label: selectedLabel, sort, page: 0, starredOnly }, replace: true })
-    })
-  }
+      navigate({
+        to: '/',
+        search: {
+          q: normalizedQuery,
+          label: selectedLabel,
+          sort,
+          page: 0,
+          starredOnly,
+        },
+        replace: true,
+      });
+    });
+  };
 
   const handleSortChange = (newSort: string) => {
-    navigate({ to: '/', search: { q, label: selectedLabel, sort: newSort, page: 0, starredOnly } })
-  }
+    navigate({
+      to: '/',
+      search: { q, label: selectedLabel, sort: newSort, page: 0, starredOnly },
+    });
+  };
 
   const handlePageChange = (newPage: number) => {
-    blurActiveElement()
-    navigate({ to: '/', search: { q, label: selectedLabel, sort, page: newPage, starredOnly } })
-  }
+    blurActiveElement();
+    navigate({
+      to: '/',
+      search: { q, label: selectedLabel, sort, page: newPage, starredOnly },
+    });
+  };
 
   const handleLabelToggle = (label: string) => {
-    const nextLabel = selectedLabel === label ? '' : label
-    navigate({ to: '/', search: { q, label: nextLabel, sort, page: 0, starredOnly } })
-  }
+    const nextLabel = selectedLabel === label ? '' : label;
+    navigate({
+      to: '/',
+      search: { q, label: nextLabel, sort, page: 0, starredOnly },
+    });
+  };
 
   const handleStarredToggle = () => {
     if (!isAuthenticated) {
@@ -180,32 +231,57 @@ export function SearchPage() {
         search: {
           returnTo: `${window.location.pathname}${window.location.search}${window.location.hash}`,
         },
-      })
-      return
+      });
+      return;
     }
 
-    navigate({ to: '/', search: { q, label: selectedLabel, sort, page: 0, starredOnly: !starredOnly } })
-  }
+    navigate({
+      to: '/',
+      search: {
+        q,
+        label: selectedLabel,
+        sort,
+        page: 0,
+        starredOnly: !starredOnly,
+      },
+    });
+  };
 
   const handleSkillClick = (namespace: string, slug: string) => {
-    navigate({ to: `/space/${namespace}/${encodeURIComponent(slug)}` })
-  }
+    navigate({ to: `/space/${namespace}/${encodeURIComponent(slug)}` });
+  };
 
   const filteredStarredSkills = starredOnly
     ? sortStarredSkills(filterStarredSkills(starredSkills ?? [], q), sort)
-    : []
+    : [];
   const starredPageItems = starredOnly
     ? filteredStarredSkills.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-    : []
+    : [];
   const totalPages = starredOnly
     ? Math.ceil(filteredStarredSkills.length / PAGE_SIZE)
     : data
       ? Math.ceil(data.total / data.size)
-      : 0
-  const displayItems = shouldShowGuidance ? [] : (starredOnly ? starredPageItems : (data?.items ?? []))
-  const isPageLoading = shouldShowGuidance ? false : (starredOnly ? isLoadingStarred : isLoading)
-  const isUpdatingResults = shouldShowGuidance ? false : (starredOnly ? isFetchingStarred && !isLoadingStarred : isFetching && !isLoading)
-  const resultCount = shouldShowGuidance ? 0 : (starredOnly ? filteredStarredSkills.length : (data?.total ?? 0))
+      : 0;
+  const displayItems = shouldShowGuidance
+    ? []
+    : starredOnly
+      ? starredPageItems
+      : (data?.items ?? []);
+  const isPageLoading = shouldShowGuidance
+    ? false
+    : starredOnly
+      ? isLoadingStarred
+      : isLoading;
+  const isUpdatingResults = shouldShowGuidance
+    ? false
+    : starredOnly
+      ? isFetchingStarred && !isLoadingStarred
+      : isFetching && !isLoading;
+  const resultCount = shouldShowGuidance
+    ? 0
+    : starredOnly
+      ? filteredStarredSkills.length
+      : (data?.total ?? 0);
 
   return (
     <div className={APP_SHELL_PAGE_CLASS_NAME}>
@@ -223,7 +299,9 @@ export function SearchPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-muted-foreground">{t('search.sort.label')}</span>
+            <span className="text-sm font-medium text-muted-foreground">
+              {t('search.sort.label')}
+            </span>
             <div className="flex gap-2">
               <Button
                 variant={sort === 'relevance' ? 'default' : 'outline'}
@@ -264,7 +342,9 @@ export function SearchPage() {
         ) : null}
 
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-muted-foreground">{t('search.filters.label')}</span>
+          <span className="text-sm font-medium text-muted-foreground">
+            {t('search.filters.label')}
+          </span>
           <Button
             variant={starredOnly ? 'default' : 'outline'}
             size="sm"
@@ -272,16 +352,17 @@ export function SearchPage() {
           >
             {t('search.filterStarred')}
           </Button>
-          {!starredOnly && labels?.map((label) => (
-            <Button
-              key={label.slug}
-              variant={selectedLabel === label.slug ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleLabelToggle(label.slug)}
-            >
-              {label.displayName}
-            </Button>
-          ))}
+          {!starredOnly &&
+            labels?.map((label) => (
+              <Button
+                key={label.slug}
+                variant={selectedLabel === label.slug ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleLabelToggle(label.slug)}
+              >
+                {label.displayName}
+              </Button>
+            ))}
         </div>
       </div>
 
@@ -292,7 +373,10 @@ export function SearchPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {displayItems.map((skill, idx) => (
-              <div key={skill.id} className={`h-full animate-fade-up delay-${Math.min(idx % 6 + 1, 6)}`}>
+              <div
+                key={skill.id}
+                className={`h-full animate-fade-up delay-${Math.min((idx % 6) + 1, 6)}`}
+              >
                 <SkillCard
                   skill={skill}
                   highlightStarred
@@ -310,17 +394,32 @@ export function SearchPage() {
           )}
         </>
       ) : (
-        <EmptyState
-          title={starredOnly ? t('search.noStarredResults') : t('search.noResults')}
-          description={
-            shouldShowGuidance
-              ? t('search.enterKeyword')
-              : starredOnly
-              ? (q ? t('search.noStarredResultsFor', { q }) : t('search.noStarredSkills'))
-              : (q ? t('search.noResultsFor', { q }) : t('search.enterKeyword'))
-          }
-        />
+        <>
+          <EmptyState
+            title={
+              starredOnly ? t('search.noStarredResults') : t('search.noResults')
+            }
+            description={
+              shouldShowGuidance
+                ? t('search.enterKeyword')
+                : starredOnly
+                  ? q
+                    ? t('search.noStarredResultsFor', { q })
+                    : t('search.noStarredSkills')
+                  : q
+                    ? t('search.noResultsFor', { q })
+                    : t('search.enterKeyword')
+            }
+          />
+          {totalPages > 1 && (
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          )}
+        </>
       )}
     </div>
-  )
+  );
 }
