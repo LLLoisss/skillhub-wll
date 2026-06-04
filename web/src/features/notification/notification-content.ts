@@ -8,6 +8,9 @@ export type NotificationDisplay = {
 type NotificationBody = {
   skillName?: string
   version?: string
+  displayName?: string
+  slug?: string
+  reviewComment?: string
 }
 
 function parseBody(bodyJson?: string): NotificationBody {
@@ -79,6 +82,39 @@ export function resolveNotificationDisplay(item: NotificationItem, language: str
         title: zh ? '技能发布成功' : 'Skill published',
         description: skillName ? (zh ? `${skillName}${versionSuffix} 已发布。` : `${skillName}${versionSuffix} was published.`) : '',
       }
+    case 'NAMESPACE_APPLICATION_SUBMITTED': {
+      const nsName = body.displayName ?? body.slug ?? ''
+      return {
+        title: zh ? '命名空间审核提交' : 'Namespace review submitted',
+        description: nsName ? (zh ? `${nsName} 已提交审核。` : `${nsName} was submitted for review.`) : '',
+      }
+    }
+    case 'NAMESPACE_APPLICATION_PENDING_REVIEW': {
+      const nsName = body.displayName ?? body.slug ?? ''
+      return {
+        title: zh ? '新的命名空间申请' : 'New namespace application',
+        description: nsName ? (zh ? `命名空间 ${nsName} 有新的申请，请审核。` : `A new application for namespace ${nsName} is pending review.`) : '',
+      }
+    }
+    case 'NAMESPACE_APPLICATION_APPROVED': {
+      const nsName = body.displayName ?? body.slug ?? ''
+      return {
+        title: zh ? '命名空间申请通过' : 'Namespace application approved',
+        description: nsName ? (zh ? `您申请的命名空间 ${nsName} 已通过审核。` : `Your application for namespace ${nsName} has been approved.`) : '',
+      }
+    }
+    case 'NAMESPACE_APPLICATION_REJECTED': {
+      const nsName = body.displayName ?? body.slug ?? ''
+      const comment = body.reviewComment ?? ''
+      return {
+        title: zh ? '命名空间申请被拒绝' : 'Namespace application rejected',
+        description: nsName
+          ? (zh
+            ? `您申请的命名空间 ${nsName} 未通过审核。${comment ? `原因：${comment}` : ''}`
+            : `Your application for namespace ${nsName} was rejected.${comment ? ` Reason: ${comment}` : ''}`)
+          : '',
+      }
+    }
     default:
       return {
         title: item.title,
