@@ -1,7 +1,11 @@
 package com.iflytek.skillhub.domain.namespace;
 
+import com.iflytek.skillhub.domain.event.NamespaceApplicationApprovedEvent;
+import com.iflytek.skillhub.domain.event.NamespaceApplicationRejectedEvent;
+import com.iflytek.skillhub.domain.event.NamespaceApplicationSubmittedEvent;
 import com.iflytek.skillhub.domain.shared.exception.DomainBadRequestException;
 import com.iflytek.skillhub.domain.shared.exception.DomainNotFoundException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,13 +28,16 @@ public class NamespaceApplicationService {
     private final NamespaceApplicationRepository applicationRepository;
     private final NamespaceRepository namespaceRepository;
     private final NamespaceService namespaceService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public NamespaceApplicationService(NamespaceApplicationRepository applicationRepository,
                                        NamespaceRepository namespaceRepository,
-                                       NamespaceService namespaceService) {
+                                       NamespaceService namespaceService,
+                                       ApplicationEventPublisher eventPublisher) {
         this.applicationRepository = applicationRepository;
         this.namespaceRepository = namespaceRepository;
         this.namespaceService = namespaceService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -59,7 +66,10 @@ public class NamespaceApplicationService {
         }
 
         var application = new NamespaceApplication(slug, displayName, description, applicantId);
-        return applicationRepository.save(application);
+        NamespaceApplication saved = applicationRepository.save(application);
+        eventPublisher.publishEvent(new NamespaceApplicationSubmittedEvent(
+                saved.getId(), slug, displayName, applicantId));
+        return saved;
     }
 
     /**
@@ -111,7 +121,11 @@ public class NamespaceApplicationService {
         application.setReviewerId(reviewerId);
         application.setReviewedAt(Instant.now());
         application.setNamespaceId(namespace.getId());
-        return applicationRepository.save(application);
+        NamespaceApplication saved = applicationRepository.save(application);
+        eventPublisher.publishEvent(new NamespaceApplicationApprovedEvent(
+                saved.getId(), saved.getSlug(), saved.getDisplayName(),
+                saved.getApplicantId(), reviewerId));
+        return saved;
     }
 
     /**
@@ -130,7 +144,11 @@ public class NamespaceApplicationService {
         application.setReviewerId(reviewerId);
         application.setReviewedAt(Instant.now());
         application.setReviewComment(comment);
-        return applicationRepository.save(application);
+        NamespaceApplication saved = applicationRepository.save(application);
+        eventPublisher.publishEvent(new NamespaceApplicationRejectedEvent(
+                saved.getId(), saved.getSlug(), saved.getDisplayName(),
+                saved.getApplicantId(), reviewerId, comment));
+        return saved;
     }
 
     // -------------------------------------------------------------------------

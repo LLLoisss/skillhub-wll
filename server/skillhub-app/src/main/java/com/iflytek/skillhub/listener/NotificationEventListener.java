@@ -189,6 +189,63 @@ public class NotificationEventListener {
         });
     }
 
+    @Async("skillhubEventExecutor")
+    @TransactionalEventListener
+    public void onNamespaceApplicationSubmitted(NamespaceApplicationSubmittedEvent event) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("applicationId", event.applicationId());
+        body.put("slug", event.slug());
+        body.put("displayName", event.displayName());
+        body.put("applicantId", event.applicantId());
+        String json = toJson(body);
+
+        // 申请人收到提交确认
+        String applicantTitle = "Namespace application submitted: " + event.displayName();
+        dispatcher.dispatch(event.applicantId(), NotificationCategory.REVIEW,
+                "NAMESPACE_APPLICATION_SUBMITTED", applicantTitle, json,
+                "NAMESPACE_APPLICATION", event.applicationId());
+
+        // 平台管理员收到待审通知
+        String adminTitle = "New namespace application: " + event.displayName();
+        List<String> admins = recipientResolver.resolvePlatformSkillAdmins();
+        for (String admin : admins.stream().distinct().toList()) {
+            dispatcher.dispatch(admin, NotificationCategory.REVIEW,
+                    "NAMESPACE_APPLICATION_PENDING_REVIEW", adminTitle, json,
+                    "NAMESPACE_APPLICATION", event.applicationId());
+        }
+    }
+
+    @Async("skillhubEventExecutor")
+    @TransactionalEventListener
+    public void onNamespaceApplicationApproved(NamespaceApplicationApprovedEvent event) {
+        String title = "Namespace application approved: " + event.displayName();
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("applicationId", event.applicationId());
+        body.put("slug", event.slug());
+        body.put("displayName", event.displayName());
+        body.put("reviewerId", event.reviewerId());
+        String json = toJson(body);
+        dispatcher.dispatch(event.applicantId(), NotificationCategory.REVIEW,
+                "NAMESPACE_APPLICATION_APPROVED", title, json,
+                "NAMESPACE_APPLICATION", event.applicationId());
+    }
+
+    @Async("skillhubEventExecutor")
+    @TransactionalEventListener
+    public void onNamespaceApplicationRejected(NamespaceApplicationRejectedEvent event) {
+        String title = "Namespace application rejected: " + event.displayName();
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("applicationId", event.applicationId());
+        body.put("slug", event.slug());
+        body.put("displayName", event.displayName());
+        body.put("reviewerId", event.reviewerId());
+        body.put("reviewComment", event.comment());
+        String json = toJson(body);
+        dispatcher.dispatch(event.applicantId(), NotificationCategory.REVIEW,
+                "NAMESPACE_APPLICATION_REJECTED", title, json,
+                "NAMESPACE_APPLICATION", event.applicationId());
+    }
+
     // --- helpers ---
 
     private String skillDisplayName(Skill skill) {

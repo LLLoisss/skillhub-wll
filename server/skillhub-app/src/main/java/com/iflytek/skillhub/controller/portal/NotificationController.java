@@ -119,6 +119,15 @@ public class NotificationController extends BaseApiController {
         if ("REPORT_SUBMITTED".equals(eventType)) {
             return new NotificationTarget("REPORT", entityId, "/dashboard/reports");
         }
+        if ("NAMESPACE_APPLICATION_SUBMITTED".equals(eventType)) {
+            return new NotificationTarget("NAMESPACE_APPLICATION", entityId, "/dashboard/namespaces");
+        }
+        if ("NAMESPACE_APPLICATION_PENDING_REVIEW".equals(eventType)) {
+            return new NotificationTarget("NAMESPACE_APPLICATION", entityId, "/dashboard/reviews");
+        }
+        if ("NAMESPACE_APPLICATION_APPROVED".equals(eventType) || "NAMESPACE_APPLICATION_REJECTED".equals(eventType)) {
+            return new NotificationTarget("NAMESPACE_APPLICATION", entityId, "/dashboard/namespaces");
+        }
         if (namespace != null && slug != null && ("SKILL".equals(entityType) || notification.getCategory() == NotificationCategory.PUBLISH)) {
             return new NotificationTarget("SKILL", entityId, "/space/" + namespace + "/" + slug);
         }
