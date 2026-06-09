@@ -125,9 +125,9 @@ public class SkillLifecycleProjectionService {
             return null;
         }
         return skillVersionRepository.findBySkillId(skill.getId()).stream()
-                .filter(v -> v.getStatus() != SkillVersionStatus.PUBLISHED
-                        && v.getStatus() != SkillVersionStatus.YANKED)
                 .max(versionComparator())
+				.filter(v -> v.getStatus() != SkillVersionStatus.PUBLISHED
+                        && v.getStatus() != SkillVersionStatus.YANKED)
                 .orElse(null);
     }
 
@@ -152,8 +152,8 @@ public class SkillLifecycleProjectionService {
 
     private Comparator<SkillVersion> versionComparator() {
         return Comparator
-                .comparing(SkillVersion::getPublishedAt, Comparator.nullsLast(Comparator.naturalOrder()))
-                .thenComparing(SkillVersion::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                .comparing(SkillVersion::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+				.thenComparing(SkillVersion::getPublishedAt, Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(SkillVersion::getId, Comparator.nullsLast(Comparator.naturalOrder()));
     }
 
