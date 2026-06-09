@@ -47,7 +47,7 @@ public class SkillLifecycleProjectionService {
 
     public Projection projectForViewer(Skill skill, String currentUserId, Map<Long, NamespaceRole> userNsRoles) {
         VersionProjection publishedVersion = toProjection(resolvePublishedVersion(skill));
-        VersionProjection ownerPreviewVersion = toProjection(resolveOwnerPendingPreview(skill, currentUserId, userNsRoles));
+        VersionProjection ownerPreviewVersion = toProjection(resolveOwnerPreviewVersion(skill, currentUserId, userNsRoles));
         VersionProjection headlineVersion = publishedVersion != null ? publishedVersion : ownerPreviewVersion;
         ResolutionMode resolutionMode = headlineVersion == null
                 ? ResolutionMode.NONE
@@ -125,7 +125,23 @@ public class SkillLifecycleProjectionService {
             return null;
         }
         return skillVersionRepository.findBySkillId(skill.getId()).stream()
-                .max(versionComparator())
+				.filter(v -> v.getStatus() != SkillVersionStatus.PUBLISHED
+                        && v.getStatus() != SkillVersionStatus.YANKED)
+				.max(versionComparator())
+                .orElse(null);
+    }
+
+	/**
+     * 返回最新一个版本是否是预览版本，如果是预览版本则返回，如果不是返回空
+     * Includes PENDING_REVIEW, REJECTED, DRAFT, SCANNING, SCAN_FAILED — any status
+     * that isn't already covered by the published projection and isn't yanked.
+     */
+    private SkillVersion resolveOwnerPreviewVersion(Skill skill, String currentUserId, Map<Long, NamespaceRole> userNsRoles) {
+        if (!canManage(skill, currentUserId, userNsRoles)) {
+            return null;
+        }
+        return skillVersionRepository.findBySkillId(skill.getId()).stream()
+                .max(ownerPreviewVersionComparator())
 				.filter(v -> v.getStatus() != SkillVersionStatus.PUBLISHED
                         && v.getStatus() != SkillVersionStatus.YANKED)
                 .orElse(null);
@@ -151,6 +167,13 @@ public class SkillLifecycleProjectionService {
     }
 
     private Comparator<SkillVersion> versionComparator() {
+        return Comparator
+				.comparing(SkillVersion::getPublishedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(SkillVersion::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(SkillVersion::getId, Comparator.nullsLast(Comparator.naturalOrder()));
+    }
+
+	private Comparator<SkillVersion> ownerPreviewVersionComparator() {
         return Comparator
                 .comparing(SkillVersion::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
 				.thenComparing(SkillVersion::getPublishedAt, Comparator.nullsLast(Comparator.naturalOrder()))
