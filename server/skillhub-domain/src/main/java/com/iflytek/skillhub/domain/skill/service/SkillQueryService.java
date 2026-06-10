@@ -24,12 +24,16 @@ import java.io.UncheckedIOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -197,6 +201,135 @@ public class SkillQueryService {
                 projection.resolutionMode().name()
         );
     }
+
+    /**
+     * 批量查询多个技能，通过（命名空间，标识符）对进行查询，只需两次数据库往返:
+     * 一次查询命名空间，一次查询所有候选技能。
+	 * 调用者无法访问的技能会被静默地从返回列表中排除。
+     */
+    public List<SkillDetailWithNamespace> batchGetSkillDetails(
+            List<SkillBatchLookupKey> lookupKeys,
+            String currentUserId,
+            Map<Long, NamespaceRole> userNsRoles) {
+
+        if (lookupKeys == null || lookupKeys.isEmpty()) {
+            return List.of();
+        }
+
+        // 1. 获取请求中所有不重复的命名空间实体以解析命名空间ID
+        List<String> namespaceSlugs = lookupKeys.stream()
+                .map(SkillBatchLookupKey::namespace)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, Namespace> namespaceBySlug = namespaceRepository.findBySlugIn(namespaceSlugs)
+                .stream()
+                .collect(Collectors.toMap(Namespace::getSlug, ns -> ns));
+
+        // 构建一个由（namespaceId -> 技能slugs）组成的集合，用于过滤
+        Map<Long, Set<String>> slugsByNamespaceId = new HashMap<>();
+        for (SkillBatchLookupKey key : lookupKeys) {
+            Namespace ns = namespaceBySlug.get(key.namespace());
+            if (ns != null) {
+                slugsByNamespaceId.computeIfAbsent(ns.getId(), k -> new HashSet<>()).add(key.slug());
+            }
+        }
+
+        if (slugsByNamespaceId.isEmpty()) {
+            return List.of();
+        }
+
+        // 2. 给已解析的命名空间IDs，批量获取所有候选技能，并在内存中过滤出请求的技能slug
+        List<Long> namespaceIds = new ArrayList<>(slugsByNamespaceId.keySet());
+        Map<String, List<Skill>> skillsByKey = skillRepository.findByNamespaceIdIn(namespaceIds)
+                .stream()
+                .filter(s -> slugsByNamespaceId.getOrDefault(s.getNamespaceId(), Set.of()).contains(s.getSlug()))
+                .collect(Collectors.groupingBy(s -> s.getNamespaceId() + ":" + s.getSlug()));
+
+        // 3. 给所有唯一的用户ID批量查询用户显示名称
+        Set<String> ownerIds = skillsByKey.values().stream()
+                .flatMap(List::stream)
+                .map(Skill::getOwnerId)
+                .collect(Collectors.toSet());
+        Map<String, String> displayNameByOwnerId = userAccountRepository.findByIdIn(new ArrayList<>(ownerIds))
+                .stream()
+                .filter(u -> u.getDisplayName() != null && !u.getDisplayName().isBlank())
+                .collect(Collectors.toMap(UserAccount::getId, UserAccount::getDisplayName));
+
+        // 4. 按请求顺序解析并构建DTO
+        List<SkillDetailWithNamespace> results = new ArrayList<>();
+        for (SkillBatchLookupKey key : lookupKeys) {
+            Namespace namespace = namespaceBySlug.get(key.namespace());
+            if (namespace == null) {
+                continue;
+            }
+
+            List<Skill> candidates = skillsByKey.getOrDefault(
+                    namespace.getId() + ":" + key.slug(), List.of());
+            if (candidates.isEmpty()) {
+                continue;
+            }
+
+            // 如果调用者是技能所有者，则优先返回该技能（即使它是隐藏的或未发布的），否则返回已发布且未隐藏的版本（如果有）
+            Optional<Skill> ownSkill = currentUserId == null
+                    ? Optional.empty()
+                    : candidates.stream().filter(s -> currentUserId.equals(s.getOwnerId())).findFirst();
+            Optional<Skill> publishedSkill = candidates.stream()
+                    .filter(s -> s.getLatestVersionId() != null && !s.isHidden())
+                    .findFirst();
+            Optional<Skill> resolved = ownSkill.isPresent() ? ownSkill : publishedSkill;
+            if (resolved.isEmpty()) {
+                continue;
+            }
+
+            Skill skill = resolved.get();
+            if (!visibilityChecker.canAccess(skill, currentUserId, userNsRoles)) {
+                continue;
+            }
+
+            SkillLifecycleProjectionService.Projection projection =
+                    skillLifecycleProjectionService.projectForViewer(skill, currentUserId, userNsRoles);
+            SkillLifecycleProjectionService.VersionProjection headlineVersion = projection.headlineVersion();
+            SkillLifecycleProjectionService.VersionProjection publishedVersion = projection.publishedVersion();
+            SkillLifecycleProjectionService.VersionProjection ownerPreviewVersion = projection.ownerPreviewVersion();
+            String ownerPreviewReviewComment = resolveOwnerPreviewReviewComment(ownerPreviewVersion);
+
+            results.add(new SkillDetailWithNamespace(
+                    key.namespace(),
+                    new SkillDetailDTO(
+                            skill.getId(),
+                            skill.getSlug(),
+                            skill.getDisplayName(),
+                            skill.getOwnerId(),
+                            displayNameByOwnerId.get(skill.getOwnerId()),
+                            skill.getSummary(),
+                            skill.getVisibility().name(),
+                            skill.getStatus().name(),
+                            skill.getDownloadCount(),
+                            skill.getStarCount(),
+                            skill.getRatingAvg(),
+                            skill.getRatingCount(),
+                            skill.isHidden(),
+                            skill.getNamespaceId(),
+                            skill.getCreatedAt(),
+                            skill.getUpdatedAt(),
+                            canManageRestrictedSkill(skill, currentUserId, userNsRoles),
+                            canSubmitPromotion(namespace, skill, publishedVersion, currentUserId, userNsRoles),
+                            headlineVersion == null || "PUBLISHED".equals(headlineVersion.status()),
+                            currentUserId == null || !Objects.equals(skill.getOwnerId(), currentUserId),
+                            headlineVersion,
+                            publishedVersion,
+                            ownerPreviewVersion,
+                            ownerPreviewReviewComment,
+                            projection.resolutionMode().name()
+                    )
+            ));
+        }
+        return results;
+    }
+
+    public record SkillBatchLookupKey(String namespace, String slug) {}
+
+    public record SkillDetailWithNamespace(String namespace, SkillDetailDTO detail) {}
 
     /**
      * Lists skills within a namespace after filtering out records the caller is

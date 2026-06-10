@@ -13,6 +13,7 @@ public interface NamespaceRepository {
     Optional<Namespace> findById(Long id);
     List<Namespace> findByIdIn(List<Long> ids);
     Optional<Namespace> findBySlug(String slug);
+    List<Namespace> findBySlugIn(List<String> slugs);
     Page<Namespace> findByStatus(NamespaceStatus status, Pageable pageable);
     Namespace save(Namespace namespace);
 }

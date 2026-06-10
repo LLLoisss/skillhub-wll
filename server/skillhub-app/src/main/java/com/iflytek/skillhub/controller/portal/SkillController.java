@@ -9,6 +9,7 @@ import com.iflytek.skillhub.domain.skill.service.SkillLifecycleProjectionService
 import com.iflytek.skillhub.domain.skill.service.SkillQueryService;
 import com.iflytek.skillhub.dto.ApiResponse;
 import com.iflytek.skillhub.dto.ApiResponseFactory;
+import com.iflytek.skillhub.dto.BatchSkillDetailRequest;
 import com.iflytek.skillhub.dto.PageResponse;
 import com.iflytek.skillhub.dto.ResolveVersionResponse;
 import com.iflytek.skillhub.dto.SkillDetailResponse;
@@ -103,6 +104,56 @@ public class SkillController extends BaseApiController {
         );
 
         return ok("response.success.read", response);
+    }
+
+    /**
+     * 批量查询多个技能，通过（命名空间，标识符）进行查询
+     * 采用批量数据库查询方式
+     * 调用者无法访问的技能会被静默的从返回列表中排除
+     */
+    @PostMapping("/batch")
+    public ApiResponse<List<SkillDetailResponse>> batchGetSkillDetails(
+            @RequestBody BatchSkillDetailRequest request,
+            @RequestAttribute(value = "userId", required = false) String userId,
+            @RequestAttribute(value = "userNsRoles", required = false) Map<Long, NamespaceRole> userNsRoles) {
+
+        List<SkillQueryService.SkillBatchLookupKey> lookupKeys = request.skillList().stream()
+                .map(item -> new SkillQueryService.SkillBatchLookupKey(item.namespace(), item.slug()))
+                .collect(java.util.stream.Collectors.toList());
+
+        List<SkillQueryService.SkillDetailWithNamespace> details = skillQueryService.batchGetSkillDetails(
+                lookupKeys, userId, userNsRoles != null ? userNsRoles : Map.of());
+
+        List<SkillDetailResponse> responses = details.stream()
+                .map(entry -> new SkillDetailResponse(
+                        entry.detail().id(),
+                        entry.detail().slug(),
+                        entry.detail().displayName(),
+                        entry.detail().ownerId(),
+                        entry.detail().ownerDisplayName(),
+                        entry.detail().summary(),
+                        entry.detail().visibility(),
+                        entry.detail().status(),
+                        entry.detail().downloadCount(),
+                        entry.detail().starCount(),
+                        entry.detail().ratingAvg(),
+                        entry.detail().ratingCount(),
+                        entry.detail().hidden(),
+                        entry.namespace(),
+                        skillLabelAppService.listSkillLabelsBySkillId(entry.detail().id()),
+                        entry.detail().canManageLifecycle(),
+                        entry.detail().canSubmitPromotion(),
+                        entry.detail().canInteract(),
+                        entry.detail().canReport(),
+                        toLifecycleVersion(entry.detail().headlineVersion()),
+                        toLifecycleVersion(entry.detail().publishedVersion()),
+                        toLifecycleVersion(entry.detail().ownerPreviewVersion()),
+                        entry.detail().ownerPreviewReviewComment(),
+                        entry.detail().resolutionMode()
+                ))
+                .collect(java.util.stream.Collectors.toList());
+
+        return ok("response.success.read", responses);
     }
 
     /**
