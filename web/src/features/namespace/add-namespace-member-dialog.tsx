@@ -188,7 +188,7 @@ export function AddNamespaceMemberDialog({ slug, children }: AddNamespaceMemberD
             </div>
           ) : null}
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label htmlFor="member-user-id">{t('members.manualUserIdLabel')}</Label>
             <Input
               id="member-user-id"
@@ -214,7 +214,7 @@ export function AddNamespaceMemberDialog({ slug, children }: AddNamespaceMemberD
             <p className={`text-xs ${userIdError ? 'text-red-600' : 'text-muted-foreground'}`}>
               {userIdError ?? t('members.manualUserIdHint')}
             </p>
-          </div>
+          </div> */}
 
           <div className="space-y-2">
             <Label htmlFor="member-role">{t('members.roleLabel')}</Label>
