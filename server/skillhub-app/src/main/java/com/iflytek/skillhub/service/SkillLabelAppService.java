@@ -77,6 +77,35 @@ public class SkillLabelAppService {
         return toDtos(skillLabelService.listSkillLabels(skillId));
     }
 
+    public Map<Long, List<SkillLabelDto>> listSkillLabelsBySkillIds(List<Long> skillIds) {
+        if (skillIds == null || skillIds.isEmpty()) {
+            return Map.of();
+        }
+		// 查询所有skills的labelIds信息
+        List<SkillLabel> skillLabels = skillLabelService.listSkillLabelsBySkillIds(skillIds);
+        if (skillLabels.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> labelIds = skillLabels.stream()
+                .map(SkillLabel::getLabelId)
+                .distinct()
+                .toList();
+		// 根据labelIds查询标签的LabelDefinitions
+        Map<Long, LabelDefinition> definitionsById = labelDefinitionService.listByIds(labelIds).stream()
+                .collect(Collectors.toMap(LabelDefinition::getId, Function.identity()));
+		// 根据labelIds查询标签的LabelTranslations
+        Map<Long, List<LabelTranslation>> translationsByLabelId = labelDefinitionService.listTranslationsByLabelIds(labelIds);
+		// 按skillId分组
+        Map<Long, List<SkillLabel>> labelsBySkillId = skillLabels.stream()
+                .collect(Collectors.groupingBy(SkillLabel::getSkillId));
+
+        return labelsBySkillId.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> toDtos(entry.getValue(), definitionsById, translationsByLabelId)
+                ));
+    }
+
     @Transactional
     public SkillLabelDto attachLabel(String namespaceSlug,
                                      String skillSlug,
@@ -128,6 +157,12 @@ public class SkillLabelAppService {
         Map<Long, LabelDefinition> definitionsById = labelDefinitionService.listByIds(labelIds).stream()
                 .collect(Collectors.toMap(LabelDefinition::getId, Function.identity()));
         Map<Long, List<LabelTranslation>> translationsByLabelId = labelDefinitionService.listTranslationsByLabelIds(labelIds);
+        return toDtos(skillLabels, definitionsById, translationsByLabelId);
+    }
+
+    private List<SkillLabelDto> toDtos(List<SkillLabel> skillLabels,
+                                       Map<Long, LabelDefinition> definitionsById,
+                                       Map<Long, List<LabelTranslation>> translationsByLabelId) {
         return skillLabels.stream()
                 .filter(skillLabel -> definitionsById.containsKey(skillLabel.getLabelId()))
                 .map(skillLabel -> {

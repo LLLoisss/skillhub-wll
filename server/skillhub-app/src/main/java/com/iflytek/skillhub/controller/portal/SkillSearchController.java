@@ -5,6 +5,7 @@ import com.iflytek.skillhub.domain.namespace.NamespaceRole;
 import com.iflytek.skillhub.dto.ApiResponse;
 import com.iflytek.skillhub.dto.ApiResponseFactory;
 import com.iflytek.skillhub.ratelimit.RateLimit;
+import com.iflytek.skillhub.service.SkillExtendedSearchAppService;
 import com.iflytek.skillhub.service.SkillSearchAppService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +21,14 @@ import java.util.Map;
 public class SkillSearchController extends BaseApiController {
 
     private final SkillSearchAppService skillSearchAppService;
+    private final SkillExtendedSearchAppService skillExtendedSearchAppService;
 
     public SkillSearchController(SkillSearchAppService skillSearchAppService,
+                                 SkillExtendedSearchAppService skillExtendedSearchAppService,
                                  ApiResponseFactory responseFactory) {
         super(responseFactory);
         this.skillSearchAppService = skillSearchAppService;
+        this.skillExtendedSearchAppService = skillExtendedSearchAppService;
     }
 
     @GetMapping
@@ -40,6 +44,32 @@ public class SkillSearchController extends BaseApiController {
             @RequestAttribute(value = "userNsRoles", required = false) Map<Long, NamespaceRole> userNsRoles) {
 
         SkillSearchAppService.SearchResponse response = skillSearchAppService.search(
+                q,
+                namespace,
+                sort,
+                page,
+                size,
+                labels,
+                userId,
+                userNsRoles
+        );
+
+        return ok("response.success.read", response);
+    }
+
+    @GetMapping("/extended")
+    @RateLimit(category = "search", authenticated = 60, anonymous = 20)
+    public ApiResponse<SkillExtendedSearchAppService.ExtendedSearchResponse> searchExtended(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String namespace,
+            @RequestParam(name = "label", required = false) java.util.List<String> labels,
+            @RequestParam(defaultValue = "newest") String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestAttribute(value = "userId", required = false) String userId,
+            @RequestAttribute(value = "userNsRoles", required = false) Map<Long, NamespaceRole> userNsRoles) {
+
+        SkillExtendedSearchAppService.ExtendedSearchResponse response = skillExtendedSearchAppService.search(
                 q,
                 namespace,
                 sort,
