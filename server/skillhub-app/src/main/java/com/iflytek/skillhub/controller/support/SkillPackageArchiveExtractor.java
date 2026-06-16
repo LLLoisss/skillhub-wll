@@ -8,6 +8,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +19,12 @@ import java.util.zip.ZipInputStream;
 
 @Component
 public class SkillPackageArchiveExtractor {
+
+    private static final List<Charset> ZIP_NAME_CHARSETS = List.of(
+            StandardCharsets.UTF_8,
+            Charset.forName("GBK"),
+            Charset.forName("CP936")
+    );
 
     private final long maxTotalPackageSize;
     private final long maxSingleFileSize;
@@ -36,10 +44,36 @@ public class SkillPackageArchiveExtractor {
             );
         }
 
+        Exception decodingFailure = null;
+        for (Charset charset : ZIP_NAME_CHARSETS) {
+            try {
+                return extract(file, charset);
+            } catch (IllegalArgumentException e) {
+                if (!isZipNameDecodingFailure(e)) {
+                    throw e;
+                }
+                decodingFailure = e;
+            } catch (IOException e) {
+                if (!isZipNameDecodingFailure(e)) {
+                    throw e;
+                }
+                decodingFailure = e;
+            }
+        }
+        if (decodingFailure instanceof IOException ioException) {
+            throw ioException;
+        }
+        if (decodingFailure instanceof RuntimeException runtimeException) {
+            throw runtimeException;
+        }
+        throw new IllegalArgumentException("Unable to decode package entry names");
+    }
+
+    private List<PackageEntry> extract(MultipartFile file, Charset zipNameCharset) throws IOException {
         List<PackageEntry> entries = new ArrayList<>();
         long totalSize = 0;
 
-        try (ZipInputStream zis = new ZipInputStream(file.getInputStream())) {
+        try (ZipInputStream zis = new ZipInputStream(file.getInputStream(), zipNameCharset)) {
             ZipEntry zipEntry;
             while ((zipEntry = zis.getNextEntry()) != null) {
                 if (zipEntry.isDirectory()) {
@@ -74,6 +108,20 @@ public class SkillPackageArchiveExtractor {
         }
 
         return stripSingleRootDirectory(entries);
+    }
+
+    private boolean isZipNameDecodingFailure(Throwable throwable) {
+        for (Throwable current = throwable; current != null; current = current.getCause()) {
+            String message = current.getMessage();
+            if (message == null) {
+                continue;
+            }
+            String lowerMessage = message.toLowerCase();
+            if (lowerMessage.contains("malformed") || lowerMessage.contains("unmappable")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

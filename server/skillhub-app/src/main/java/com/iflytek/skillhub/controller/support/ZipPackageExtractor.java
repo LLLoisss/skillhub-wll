@@ -8,6 +8,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -24,6 +26,11 @@ import java.util.zip.ZipInputStream;
 public class ZipPackageExtractor {
 
     private static final int BUFFER_SIZE = 8192;
+    private static final List<Charset> ZIP_NAME_CHARSETS = List.of(
+            StandardCharsets.UTF_8,
+            Charset.forName("GBK"),
+            Charset.forName("CP936")
+    );
 
     private final SkillPublishProperties properties;
 
@@ -32,11 +39,38 @@ public class ZipPackageExtractor {
     }
 
     public List<PackageEntry> extract(MultipartFile file) throws IOException {
+        Exception decodingFailure = null;
+        for (Charset charset : ZIP_NAME_CHARSETS) {
+            try {
+                return extract(file, charset);
+            } catch (IllegalArgumentException e) {
+                if (!isZipNameDecodingFailure(e)) {
+                    throw e;
+                }
+                decodingFailure = e;
+            } catch (IOException e) {
+                if (!isZipNameDecodingFailure(e)) {
+                    throw e;
+                }
+                decodingFailure = e;
+            }
+        }
+        if (decodingFailure instanceof IOException ioException) {
+            throw ioException;
+        }
+        if (decodingFailure instanceof RuntimeException runtimeException) {
+            throw runtimeException;
+        }
+        throw new DomainBadRequestException("error.skill.publish.package.invalid",
+                "Unable to decode package entry names");
+    }
+
+    private List<PackageEntry> extract(MultipartFile file, Charset zipNameCharset) throws IOException {
         List<PackageEntry> entries = new ArrayList<>();
         Set<String> seenPaths = new HashSet<>();
         long totalSize = 0L;
 
-        try (ZipInputStream zis = new ZipInputStream(file.getInputStream())) {
+        try (ZipInputStream zis = new ZipInputStream(file.getInputStream(), zipNameCharset)) {
             ZipEntry zipEntry;
             while ((zipEntry = zis.getNextEntry()) != null) {
                 if (zipEntry.isDirectory()) {
@@ -73,6 +107,20 @@ public class ZipPackageExtractor {
         }
 
         return SkillPackageArchiveExtractor.stripSingleRootDirectory(entries);
+    }
+
+    private boolean isZipNameDecodingFailure(Throwable throwable) {
+        for (Throwable current = throwable; current != null; current = current.getCause()) {
+            String message = current.getMessage();
+            if (message == null) {
+                continue;
+            }
+            String lowerMessage = message.toLowerCase();
+            if (lowerMessage.contains("malformed") || lowerMessage.contains("unmappable")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private byte[] readEntry(ZipInputStream zis, String path) throws IOException {
