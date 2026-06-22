@@ -1261,6 +1261,13 @@
     "myDepartments": "我的部门",
     "allDepartments": "全部部门",
     "otherDepartment": "其他部门",
+    "labels": "标签",
+    "selectLabels": "选择标签",
+    "searchLabels": "搜索标签...",
+    "selectedLabelsCount": "已选 {{count}} 个标签",
+    "noLabelsFound": "未找到匹配标签",
+    "removeLabel": "移除 {{label}}",
+    "maxLabelsReached": "最多只能选择十个标签",
     "visibility": "可见性",
     "visibilityOptions": {
       "public": "公开",
@@ -1291,7 +1298,7 @@
     "warningConfirmCancel": "返回修改",
     "frontmatterFailedTitle": "SKILL.md 格式有误",
     "frontmatterFailedDescription": "请检查 SKILL.md 顶部 frontmatter 的 YAML 格式。若字段值中包含冒号，请用引号包裹。",
-    "selectRequired": "请选择命名空间和文件"
+    "selectRequired": "请完成命名空间、发布人、部门、标签和文件选择"
   },
   "toast": {
     "success": "成功",

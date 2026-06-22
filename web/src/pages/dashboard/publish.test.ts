@@ -18,6 +18,10 @@ vi.mock('@/features/publish/upload-zone', () => ({
   UploadZone: () => null,
 }))
 
+vi.mock('@/features/auth/use-auth', () => ({
+  useAuth: () => ({ user: { email: 'user@example.com', platformRoles: [] } }),
+}))
+
 vi.mock('@/shared/ui/button', () => ({
   Button: ({ children }: { children: unknown }) => children,
 }))
@@ -29,6 +33,7 @@ vi.mock('@/shared/ui/select', () => ({
   SelectTrigger: ({ children }: { children: unknown }) => children,
   SelectValue: () => null,
   normalizeSelectValue: (v: string) => v || null,
+  SELECT_TRIGGER_CLASS_NAME: '',
 }))
 
 vi.mock('@/shared/ui/label', () => ({
@@ -41,6 +46,15 @@ vi.mock('@/shared/ui/card', () => ({
 
 vi.mock('@/shared/hooks/use-skill-queries', () => ({
   usePublishSkill: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}))
+
+vi.mock('@/shared/hooks/use-department-queries', () => ({
+  useAllDepartments: () => ({ data: [], isLoading: false }),
+  useUserProfileByEmail: () => ({ data: null }),
+}))
+
+vi.mock('@/shared/hooks/use-label-queries', () => ({
+  useVisibleLabels: () => ({ data: [], isLoading: false }),
 }))
 
 vi.mock('@/shared/hooks/use-namespace-queries', () => ({

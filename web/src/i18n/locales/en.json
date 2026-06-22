@@ -1260,6 +1260,13 @@
     "myDepartments": "My Departments",
     "allDepartments": "All Departments",
     "otherDepartment": "Other department",
+    "labels": "Labels",
+    "selectLabels": "Select labels",
+    "searchLabels": "Search labels...",
+    "selectedLabelsCount": "{{count}} labels selected",
+    "noLabelsFound": "No labels found",
+    "removeLabel": "Remove {{label}}",
+    "maxLabelsReached": "You can select up to 10 labels",
     "visibility": "Visibility",
     "visibilityOptions": {
       "public": "Public",
@@ -1290,7 +1297,7 @@
     "warningConfirmCancel": "Go back and fix",
     "frontmatterFailedTitle": "SKILL.md format is invalid",
     "frontmatterFailedDescription": "Please check the YAML frontmatter at the top of SKILL.md. If a field value contains a colon, wrap it in quotes.",
-    "selectRequired": "Please select namespace and file"
+    "selectRequired": "Please select namespace, publisher name, department, labels and file"
   },
   "toast": {
     "success": "Success",
