@@ -81,6 +81,14 @@ skillhub:
       enabled: ${SKILLHUB_AUTH_DIRECT_ENABLED:false}
     session-bootstrap:
       enabled: ${SKILLHUB_AUTH_SESSION_BOOTSTRAP_ENABLED:false}
+    third-party:
+      platforms:
+        bocomcode:
+          token-verify-url: ${SKILLHUB_AUTH_THIRD_PARTY_BOCOMCODE_TOKEN_VERIFY_URL:}
+          auth-secret: ${SKILLHUB_AUTH_THIRD_PARTY_BOCOMCODE_AUTH_SECRET:}
+        guwp:
+          token-verify-url: ${SKILLHUB_AUTH_THIRD_PARTY_GUWP_TOKEN_VERIFY_URL:}
+          auth-secret: ${SKILLHUB_AUTH_THIRD_PARTY_GUWP_AUTH_SECRET:}
     password-reset:
       code-expiry: ${SKILLHUB_AUTH_PASSWORD_RESET_CODE_EXPIRY:PT10M}
       email-from-address: ${SKILLHUB_AUTH_PASSWORD_RESET_FROM_ADDRESS:noreply@skillhub.local}
@@ -199,3 +207,5 @@ management:
     export:
       prometheus:
         enabled: true
+
+
