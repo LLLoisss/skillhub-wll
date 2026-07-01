@@ -17,8 +17,10 @@ import com.iflytek.skillhub.exception.UnauthorizedException;
 import com.iflytek.skillhub.metrics.SkillHubMetrics;
 import com.iflytek.skillhub.ratelimit.RateLimit;
 import com.iflytek.skillhub.security.AuthFailureThrottleService;
+import com.iflytek.skillhub.service.AuthAuditService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,19 +40,22 @@ public class LocalAuthController extends BaseApiController {
     private final PlatformSessionService platformSessionService;
     private final AuthFailureThrottleService authFailureThrottleService;
     private final PasswordResetService passwordResetService;
+    private final AuthAuditService authAuditService;
 
     public LocalAuthController(ApiResponseFactory responseFactory,
                                LocalAuthService localAuthService,
                                SkillHubMetrics skillHubMetrics,
                                PlatformSessionService platformSessionService,
                                AuthFailureThrottleService authFailureThrottleService,
-                               PasswordResetService passwordResetService) {
+                               PasswordResetService passwordResetService,
+                               AuthAuditService authAuditService) {
         super(responseFactory);
         this.localAuthService = localAuthService;
         this.skillHubMetrics = skillHubMetrics;
         this.platformSessionService = platformSessionService;
         this.authFailureThrottleService = authFailureThrottleService;
         this.passwordResetService = passwordResetService;
+        this.authAuditService = authAuditService;
     }
 
     @PostMapping("/register")
@@ -67,23 +72,26 @@ public class LocalAuthController extends BaseApiController {
     @RateLimit(category = "auth-local-login", authenticated = 20, anonymous = 10, windowSeconds = 60)
     public ApiResponse<AuthMeResponse> login(@Valid @RequestBody LocalLoginRequest request,
                                              HttpServletRequest httpRequest) {
-        authFailureThrottleService.assertAllowed("local", request.username(), resolveClientIp(httpRequest));
         PlatformPrincipal principal;
         try {
+            authFailureThrottleService.assertAllowed("local", request.username(), resolveClientIp(httpRequest));
             principal = localAuthService.login(request.username(), request.password());
         } catch (AuthFlowException ex) {
             if (HttpStatus.UNAUTHORIZED.equals(ex.getStatus())) {
                 authFailureThrottleService.recordFailure("local", request.username(), resolveClientIp(httpRequest));
             }
             skillHubMetrics.recordLocalLogin(false);
+            authAuditService.recordLoginFailure("LOCAL", "local", request.username(), ex.getMessage(), httpRequest, null);
             throw ex;
         } catch (RuntimeException ex) {
             skillHubMetrics.recordLocalLogin(false);
+            authAuditService.recordLoginFailure("LOCAL", "local", request.username(), ex.getMessage(), httpRequest, null);
             throw ex;
         }
         authFailureThrottleService.resetIdentifier("local", request.username());
         skillHubMetrics.recordLocalLogin(true);
         platformSessionService.establishSession(principal, httpRequest);
+        authAuditService.recordLoginSuccess(principal, "LOCAL", "local", httpRequest, Map.of());
         return ok("response.success.read", AuthMeResponse.from(principal));
     }
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iflytek.skillhub.dto.ApiResponse;
 import com.iflytek.skillhub.dto.ApiResponseFactory;
 import com.iflytek.skillhub.metrics.SkillHubMetrics;
+import com.iflytek.skillhub.service.AuthAuditService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -28,19 +29,22 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     private final ApiResponseFactory apiResponseFactory;
     private final ObjectMapper objectMapper;
     private final SkillHubMetrics metrics;
+    private final AuthAuditService authAuditService;
 
     public RateLimitInterceptor(RateLimiter rateLimiter,
                                 ClientIpResolver clientIpResolver,
                                 AnonymousDownloadIdentityService anonymousDownloadIdentityService,
                                 ApiResponseFactory apiResponseFactory,
                                 ObjectMapper objectMapper,
-                                SkillHubMetrics metrics) {
+                                SkillHubMetrics metrics,
+                                AuthAuditService authAuditService) {
         this.rateLimiter = rateLimiter;
         this.clientIpResolver = clientIpResolver;
         this.anonymousDownloadIdentityService = anonymousDownloadIdentityService;
         this.apiResponseFactory = apiResponseFactory;
         this.objectMapper = objectMapper;
         this.metrics = metrics;
+        this.authAuditService = authAuditService;
     }
 
     @Override
@@ -73,6 +77,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
         if (!allowed) {
             metrics.incrementRateLimitExceeded(rateLimit.category());
+            recordLoginRateLimitFailure(rateLimit.category(), request);
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             ApiResponse<Void> body = apiResponseFactory.error(429, "error.rateLimit.exceeded");
@@ -81,6 +86,14 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         }
 
         return true;
+    }
+
+    private void recordLoginRateLimitFailure(String category, HttpServletRequest request) {
+        if ("auth-local-login".equals(category)) {
+            authAuditService.recordLoginFailure("LOCAL", "local", null, "error.rateLimit.exceeded", request, null);
+        } else if ("auth-third-party-login".equals(category)) {
+            authAuditService.recordLoginFailure("THIRD_PARTY", null, null, "error.rateLimit.exceeded", request, null);
+        }
     }
 
     private boolean checkAnonymousLimit(HttpServletRequest request,
