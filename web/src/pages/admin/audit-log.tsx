@@ -24,6 +24,8 @@ import { useAuditLog } from '@/features/admin/use-audit-log'
 
 const ACTION_OPTIONS = [
   { value: '', labelKey: 'auditLog.filterAll' },
+  { value: 'LOGIN_SUCCESS', labelKey: 'auditLog.filterLoginSuccess' },
+  { value: 'LOGIN_FAILURE', labelKey: 'auditLog.filterLoginFailure' },
   { value: 'CLI_PUBLISH', labelKey: 'auditLog.filterCliPublish' },
   { value: 'COMPAT_PUBLISH', labelKey: 'auditLog.filterCompatPublish' },
   { value: 'REVIEW_SUBMIT', labelKey: 'auditLog.filterReviewSubmit' },

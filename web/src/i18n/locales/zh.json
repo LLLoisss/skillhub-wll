@@ -688,6 +688,8 @@
     "title": "审计日志",
     "subtitle": "查看系统操作记录",
     "filterAll": "全部",
+    "filterLoginSuccess": "登录成功",
+    "filterLoginFailure": "登录失败",
     "filterCliPublish": "CLI 发布",
     "filterCompatPublish": "Compat 发布",
     "filterReviewSubmit": "提交审核",

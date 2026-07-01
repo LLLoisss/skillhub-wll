@@ -688,6 +688,8 @@
     "title": "Audit Log",
     "subtitle": "View system operation records",
     "filterAll": "All",
+    "filterLoginSuccess": "Login success",
+    "filterLoginFailure": "Login failure",
     "filterCliPublish": "CLI Publish",
     "filterCompatPublish": "Compat Publish",
     "filterReviewSubmit": "Review Submitted",
