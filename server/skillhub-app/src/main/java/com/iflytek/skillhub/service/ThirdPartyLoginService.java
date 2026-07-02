@@ -15,7 +15,6 @@ import com.iflytek.skillhub.service.thirdparty.ThirdPartyAesUtil;
 import com.iflytek.skillhub.service.thirdparty.ThirdPartyPlatformAuthenticator;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -30,7 +29,6 @@ import org.springframework.util.StringUtils;
 @Service
 public class ThirdPartyLoginService {
 
-    private static final Duration AUTH_TOKEN_TTL = Duration.ofMinutes(5);
     private static final int SECRETLENGTH = 8;
 
     private final ThirdPartyLoginProperties properties;
@@ -100,7 +98,7 @@ public class ThirdPartyLoginService {
         }
         // 时效校验：检查时间戳是否在有效期内（不能是未来时间且不能超过TTL）
         Instant now = Instant.now(clock);
-        if (issuedAt.isAfter(now) || issuedAt.plus(AUTH_TOKEN_TTL).isBefore(now)) {
+        if (issuedAt.isAfter(now) || issuedAt.plus(properties.getAuthTokenTtl()).isBefore(now)) {
             throw new AuthFlowException(HttpStatus.UNAUTHORIZED, "error.auth.thirdParty.tokenExpired");
         }
 

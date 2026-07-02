@@ -2,6 +2,7 @@ package com.iflytek.skillhub.config;
 
 import com.iflytek.skillhub.dto.ThirdPartyLoginPlatform;
 import com.iflytek.skillhub.exception.BadRequestException;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -12,7 +13,17 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "skillhub.auth.third-party")
 public class ThirdPartyLoginProperties {
 
+    private Duration authTokenTtl = Duration.ofMinutes(5);
+
     private Map<String, PlatformProperties> platforms = new HashMap<>();
+
+    public Duration getAuthTokenTtl() {
+        return authTokenTtl;
+    }
+
+    public void setAuthTokenTtl(Duration authTokenTtl) {
+        this.authTokenTtl = authTokenTtl;
+    }
 
     public Map<String, PlatformProperties> getPlatforms() {
         return platforms;

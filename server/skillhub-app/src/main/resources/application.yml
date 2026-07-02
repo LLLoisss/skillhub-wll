@@ -82,6 +82,7 @@ skillhub:
     session-bootstrap:
       enabled: ${SKILLHUB_AUTH_SESSION_BOOTSTRAP_ENABLED:false}
     third-party:
+      auth-token-ttl: ${SKILLHUB_AUTH_THIRD_PARTY_AUTH_TOKEN_TTL:PT5M}
       platforms:
         bocomcode:
           token-verify-url: ${SKILLHUB_AUTH_THIRD_PARTY_BOCOMCODE_TOKEN_VERIFY_URL:}
