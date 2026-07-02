@@ -28,6 +28,7 @@ import type {
   AuthMethod,
   OAuthProvider,
   User,
+  ThirdPartyLoginRequest,
   ManagedNamespace,
   Namespace,
   CreateNamespaceRequest,
@@ -420,6 +421,17 @@ export const authApi = {
         'Content-Type': 'application/json',
       }),
       body: JSON.stringify({ boComCodeToken: token }),
+    })
+  },
+
+  // 三方登录统一入口，后续新增的外部登录方式均应通过该接口接入。
+  async thirdPartyLogin(request: ThirdPartyLoginRequest): Promise<User> {
+    return fetchJson<User>('/api/v1/auth/third-party/login', {
+      method: 'POST',
+      headers: await ensureCsrfHeaders({
+        'Content-Type': 'application/json',
+      }),
+      body: JSON.stringify(request),
     })
   },
 }

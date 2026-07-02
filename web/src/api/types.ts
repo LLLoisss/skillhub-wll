@@ -52,6 +52,14 @@ export interface LocalLoginRequest {
   password: string
 }
 
+export type ThirdPartyLoginMethod = 'TOKEN' | 'AUTH'
+
+export interface ThirdPartyLoginRequest {
+  loginMethod: ThirdPartyLoginMethod
+  platform: string
+  token: string
+}
+
 export interface LocalRegisterRequest extends LocalLoginRequest {
   email: string
 }

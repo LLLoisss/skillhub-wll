@@ -353,8 +353,12 @@ const cliAuthRoute = createRoute({
 const externalAuthRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'auth/external',
-  validateSearch: (search: Record<string, unknown>): { token: string; returnTo: string } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { token: string; loginMethod: string; platform: string; returnTo: string } => ({
     token: typeof search.token === 'string' ? search.token : '',
+    loginMethod: typeof search.loginMethod === 'string' ? search.loginMethod : '',
+    platform: typeof search.platform === 'string' ? search.platform : '',
     returnTo: typeof search.returnTo === 'string' ? search.returnTo : '',
   }),
   component: ExternalAuthPage,
