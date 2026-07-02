@@ -29,7 +29,7 @@ import org.springframework.util.StringUtils;
 @Service
 public class ThirdPartyLoginService {
 
-    private static final int SECRETLENGTH = 8;
+    private static final int SECRET_LENGTH = 8;
 
     private final ThirdPartyLoginProperties properties;
     private final Map<ThirdPartyLoginPlatform, ThirdPartyPlatformAuthenticator> authenticators;
@@ -76,7 +76,7 @@ public class ThirdPartyLoginService {
         // 获取密钥：根据平台类型从配置中获取对应的认证密钥
         String secret = properties.getRequiredPlatform(platform).getAuthSecret();
         // 密钥校验：检查密钥是否存在且长度符合要求
-        if (!StringUtils.hasText(secret) || secret.length() != SECRETLENGTH) {
+        if (!StringUtils.hasText(secret) || secret.length() != SECRET_LENGTH) {
             throw new AuthFlowException(HttpStatus.BAD_REQUEST, "error.auth.thirdParty.authSecretInvalid");
         }
         // 生成解密密钥：使用当前日期拼接密钥生成AES解密密钥
