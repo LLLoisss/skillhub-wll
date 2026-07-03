@@ -15,6 +15,7 @@ import com.iflytek.skillhub.dto.PasswordResetConfirmRequest;
 import com.iflytek.skillhub.dto.PasswordResetRequestDto;
 import com.iflytek.skillhub.exception.UnauthorizedException;
 import com.iflytek.skillhub.metrics.SkillHubMetrics;
+import com.iflytek.skillhub.ratelimit.ClientIpResolver;
 import com.iflytek.skillhub.ratelimit.RateLimit;
 import com.iflytek.skillhub.security.AuthFailureThrottleService;
 import com.iflytek.skillhub.service.AuthAuditService;
@@ -41,6 +42,7 @@ public class LocalAuthController extends BaseApiController {
     private final AuthFailureThrottleService authFailureThrottleService;
     private final PasswordResetService passwordResetService;
     private final AuthAuditService authAuditService;
+    private final ClientIpResolver clientIpResolver;
 
     public LocalAuthController(ApiResponseFactory responseFactory,
                                LocalAuthService localAuthService,
@@ -48,7 +50,8 @@ public class LocalAuthController extends BaseApiController {
                                PlatformSessionService platformSessionService,
                                AuthFailureThrottleService authFailureThrottleService,
                                PasswordResetService passwordResetService,
-                               AuthAuditService authAuditService) {
+                               AuthAuditService authAuditService,
+                               ClientIpResolver clientIpResolver) {
         super(responseFactory);
         this.localAuthService = localAuthService;
         this.skillHubMetrics = skillHubMetrics;
@@ -56,6 +59,7 @@ public class LocalAuthController extends BaseApiController {
         this.authFailureThrottleService = authFailureThrottleService;
         this.passwordResetService = passwordResetService;
         this.authAuditService = authAuditService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @PostMapping("/register")
@@ -74,11 +78,11 @@ public class LocalAuthController extends BaseApiController {
                                              HttpServletRequest httpRequest) {
         PlatformPrincipal principal;
         try {
-            authFailureThrottleService.assertAllowed("local", request.username(), resolveClientIp(httpRequest));
+            authFailureThrottleService.assertAllowed("local", request.username(), clientIpResolver.resolve(httpRequest));
             principal = localAuthService.login(request.username(), request.password());
         } catch (AuthFlowException ex) {
             if (HttpStatus.UNAUTHORIZED.equals(ex.getStatus())) {
-                authFailureThrottleService.recordFailure("local", request.username(), resolveClientIp(httpRequest));
+                authFailureThrottleService.recordFailure("local", request.username(), clientIpResolver.resolve(httpRequest));
             }
             skillHubMetrics.recordLocalLogin(false);
             authAuditService.recordLoginFailure("LOCAL", "local", request.username(), ex.getMessage(), httpRequest, null);
@@ -118,19 +122,5 @@ public class LocalAuthController extends BaseApiController {
     public ApiResponse<Void> confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
         passwordResetService.confirmPasswordReset(request.email(), request.code(), request.newPassword());
         return ok("response.auth.password.reset.confirmed", null);
-    }
-
-    private String resolveClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
     }
 }

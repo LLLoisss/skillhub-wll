@@ -13,12 +13,12 @@ import org.springframework.web.client.RestClientException;
 
 public abstract class AbstractThirdPartyTokenAuthenticator implements ThirdPartyPlatformAuthenticator {
 
-    private static final ParameterizedTypeReference<Map<String, Object>> MAP_RESPONSE =
+    protected static final ParameterizedTypeReference<Map<String, Object>> MAP_RESPONSE =
             new ParameterizedTypeReference<>() {
             };
 
     private final ThirdPartyLoginProperties properties;
-    private final RestClient restClient;
+    protected final RestClient restClient;
     private final ThirdPartyLoginPlatform platform;
 
     protected AbstractThirdPartyTokenAuthenticator(ThirdPartyLoginProperties properties,

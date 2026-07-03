@@ -13,6 +13,7 @@ import com.iflytek.skillhub.service.SessionBootstrapService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 import org.springframework.web.bind.annotation.PostMapping;

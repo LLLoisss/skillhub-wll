@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iflytek.skillhub.auth.rbac.PlatformPrincipal;
 import com.iflytek.skillhub.domain.audit.AuditLogService;
+import com.iflytek.skillhub.ratelimit.ClientIpResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -25,10 +26,12 @@ public class AuthAuditService {
 
     private final AuditLogService auditLogService;
     private final ObjectMapper objectMapper;
+    private final ClientIpResolver clientIpResolver;
 
-    public AuthAuditService(AuditLogService auditLogService, ObjectMapper objectMapper) {
+    public AuthAuditService(AuditLogService auditLogService, ObjectMapper objectMapper, ClientIpResolver clientIpResolver) {
         this.auditLogService = auditLogService;
         this.objectMapper = objectMapper;
+        this.clientIpResolver = clientIpResolver;
     }
 
     public void recordLoginSuccess(PlatformPrincipal principal,
@@ -69,7 +72,7 @@ public class AuthAuditService {
                     TARGET_TYPE_AUTH,
                     null,
                     resolveRequestId(request),
-                    resolveClientIp(request),
+                    request == null ? null : clientIpResolver.resolve(request),
                     truncate(resolveUserAgent(request), USER_AGENT_MAX_LENGTH),
                     toJson(details));
         } catch (RuntimeException ex) {
@@ -112,23 +115,6 @@ public class AuthAuditService {
             requestId = request.getHeader("X-Request-Id");
         }
         return StringUtils.hasText(requestId) ? requestId.trim() : null;
-    }
-
-    private String resolveClientIp(HttpServletRequest request) {
-        if (request == null) {
-            return null;
-        }
-        String ip = request.getHeader("X-Forwarded-For");
-        if (!StringUtils.hasText(ip) || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (!StringUtils.hasText(ip) || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return StringUtils.hasText(ip) ? ip.trim() : null;
     }
 
     private String resolveUserAgent(HttpServletRequest request) {

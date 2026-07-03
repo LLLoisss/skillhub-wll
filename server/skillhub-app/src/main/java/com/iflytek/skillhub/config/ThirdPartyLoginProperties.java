@@ -51,7 +51,7 @@ public class ThirdPartyLoginProperties {
         private String tokenVerifyUrl;
 
         /**
-         * Offline agreed six-character platform secret used to build AES auth-login keys.
+         * Offline agreed eight-character platform secret used to build AES auth-login keys.
          */
         private String authSecret;
 

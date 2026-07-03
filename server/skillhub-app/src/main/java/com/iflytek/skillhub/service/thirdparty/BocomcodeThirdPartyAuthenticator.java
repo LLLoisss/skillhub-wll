@@ -7,28 +7,21 @@ import com.iflytek.skillhub.exception.BadRequestException;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 @Service
 public class BocomcodeThirdPartyAuthenticator extends AbstractThirdPartyTokenAuthenticator {
     private static final Logger log = LoggerFactory.getLogger(BocomcodeThirdPartyAuthenticator.class);
     private static final ThirdPartyLoginPlatform PLATFORM = ThirdPartyLoginPlatform.BOCOMCODE;
-    private static final ParameterizedTypeReference<Map<String, Object>> MAP_RESPONSE =
-            new ParameterizedTypeReference<>() {
-            };
 
     private final ThirdPartyLoginProperties properties;
-    private final RestClient restClient;
 
     public BocomcodeThirdPartyAuthenticator(ThirdPartyLoginProperties properties) {
         super(properties, PLATFORM);
         this.properties = properties;
-        this.restClient = RestClient.builder().build();
     }
 
     @Override
