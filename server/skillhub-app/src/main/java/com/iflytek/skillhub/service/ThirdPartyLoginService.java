@@ -12,6 +12,7 @@ import com.iflytek.skillhub.domain.user.UserStatus;
 import com.iflytek.skillhub.dto.ThirdPartyLoginPlatform;
 import com.iflytek.skillhub.dto.ThirdPartyLoginRequest;
 import com.iflytek.skillhub.service.thirdparty.ThirdPartyAesUtil;
+import com.iflytek.skillhub.service.thirdparty.ThirdPartyEmailUtil;
 import com.iflytek.skillhub.service.thirdparty.ThirdPartyPlatformAuthenticator;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Clock;
@@ -104,7 +105,7 @@ public class ThirdPartyLoginService {
 
         // 返回身份：将第一部分作为oa标识，构造并返回ThirdPartyIdentity对象
         String oa = parts[0].trim();
-        return new ThirdPartyIdentity(normalizeEmail(buildEmail(oa)), oa);
+        return new ThirdPartyIdentity(normalizeEmail(ThirdPartyEmailUtil.buildEmail(oa)), oa);
     }
 
     private PlatformPrincipal resolvePrincipal(ThirdPartyLoginPlatform platform, ThirdPartyIdentity identity) {
@@ -149,20 +150,6 @@ public class ThirdPartyLoginService {
             throw new AuthFlowException(HttpStatus.UNAUTHORIZED, "error.auth.thirdParty.emailInvalid");
         }
         return email.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private String buildEmail(String oa) {
-        if (oa.contains("@")) {
-            return oa;
-        }
-        String suffix = "bankcomm.com";
-        if (oa.contains(".")) {
-            String[] parts = oa.split("\\.");
-            if ("sdc".equals(parts[parts.length - 1])) {
-                suffix = "sdc.com";
-            }
-        }
-        return oa + "@" + suffix;
     }
 
     private record ThirdPartyIdentity(String email, String displayName) {
