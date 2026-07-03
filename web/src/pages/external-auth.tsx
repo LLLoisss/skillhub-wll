@@ -2,11 +2,12 @@ import { useEffect, useRef } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useThirdPartyLogin } from '@/features/auth/use-third-party-login'
-import type { ThirdPartyLoginMethod } from '@/api/types'
+import type { ThirdPartyLoginMethod, ThirdPartyLoginPlatform } from '@/api/types'
 
 const DEFAULT_LOGIN_METHOD: ThirdPartyLoginMethod = 'TOKEN'
-const DEFAULT_PLATFORM = 'BOCOMCODE'
+const DEFAULT_PLATFORM: ThirdPartyLoginPlatform = 'BOCOMCODE'
 const VALID_LOGIN_METHODS: ThirdPartyLoginMethod[] = ['TOKEN', 'AUTH']
+const VALID_PLATFORMS: ThirdPartyLoginPlatform[] = ['BOCOMCODE', 'GUWP']
 
 /**
  * 三方登录身份验证页面。
@@ -39,11 +40,17 @@ export function ExternalAuthPage() {
   )
     ? (search.loginMethod as ThirdPartyLoginMethod)
     : DEFAULT_LOGIN_METHOD
-  const platform: string = search.platform ? search.platform : DEFAULT_PLATFORM
+  const rawPlatform = search.platform
+  const isPlatformInvalid = Boolean(
+    rawPlatform && !VALID_PLATFORMS.includes(rawPlatform as ThirdPartyLoginPlatform),
+  )
+  const platform: ThirdPartyLoginPlatform = !rawPlatform || isPlatformInvalid
+    ? DEFAULT_PLATFORM
+    : (rawPlatform as ThirdPartyLoginPlatform)
   const returnTo = search.returnTo && search.returnTo.startsWith('/') ? search.returnTo : '/'
 
   useEffect(() => {
-    if (attemptedRef.current || !token) {
+    if (attemptedRef.current || !token || isPlatformInvalid) {
       return
     }
     attemptedRef.current = true
@@ -59,7 +66,7 @@ export function ExternalAuthPage() {
         },
       },
     )
-  }, [token, loginMethod, platform, returnTo, mutation, navigate])
+  }, [token, loginMethod, platform, isPlatformInvalid, returnTo, mutation, navigate])
 
   // No token provided in URL
   if (!token) {
@@ -68,6 +75,25 @@ export function ExternalAuthPage() {
         <div className="w-full max-w-md space-y-6 text-center animate-fade-up">
           <div className="glass-strong p-8 rounded-2xl space-y-4">
             <p className="text-sm text-red-600">{t('externalAuth.missingToken')}</p>
+            {/* <a
+              href="/login"
+              className="inline-block text-sm font-medium text-primary hover:underline"
+            >
+              {t('externalAuth.goToLogin')}
+            </a> */}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Invalid platform provided in URL
+  if (isPlatformInvalid) {
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <div className="w-full max-w-md space-y-6 text-center animate-fade-up">
+          <div className="glass-strong p-8 rounded-2xl space-y-4">
+            <p className="text-sm text-red-600">{t('externalAuth.invalidPlatform')}</p>
             {/* <a
               href="/login"
               className="inline-block text-sm font-medium text-primary hover:underline"

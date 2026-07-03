@@ -53,10 +53,11 @@ export interface LocalLoginRequest {
 }
 
 export type ThirdPartyLoginMethod = 'TOKEN' | 'AUTH'
+export type ThirdPartyLoginPlatform = 'BOCOMCODE' | 'GUWP'
 
 export interface ThirdPartyLoginRequest {
   loginMethod: ThirdPartyLoginMethod
-  platform: string
+  platform: ThirdPartyLoginPlatform
   token: string
 }
 

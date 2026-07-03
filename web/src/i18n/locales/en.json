@@ -228,6 +228,7 @@
     "loggingIn": "Logging in automatically, please wait...",
     "loginFailed": "External login failed. Please try again.",
     "missingToken": "Missing login credentials. Cannot log in automatically.",
+    "invalidPlatform": "Unsupported login platform. Cannot log in automatically.",
     "goToLogin": "Go to login page"
   },
   "register": {
