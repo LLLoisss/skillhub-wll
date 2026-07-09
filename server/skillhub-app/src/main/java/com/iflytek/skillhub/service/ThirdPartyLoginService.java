@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -31,6 +32,7 @@ import org.springframework.util.StringUtils;
 public class ThirdPartyLoginService {
 
     private static final int SECRET_LENGTH = 8;
+    private static final ZoneId AUTH_KEY_ZONE = ZoneId.of("Asia/Shanghai");
 
     private final ThirdPartyLoginProperties properties;
     private final Map<ThirdPartyLoginPlatform, ThirdPartyPlatformAuthenticator> authenticators;
@@ -80,8 +82,8 @@ public class ThirdPartyLoginService {
         if (!StringUtils.hasText(secret) || secret.length() != SECRET_LENGTH) {
             throw new AuthFlowException(HttpStatus.BAD_REQUEST, "error.auth.thirdParty.authSecretInvalid");
         }
-        // 生成解密密钥：使用当前日期拼接密钥生成AES解密密钥
-        String key = LocalDate.now(clock).format(DateTimeFormatter.BASIC_ISO_DATE) + secret;
+        // 生成解密密钥：使用东八区当前日期拼接密钥生成AES解密密钥
+        String key = LocalDate.now(clock.withZone(AUTH_KEY_ZONE)).format(DateTimeFormatter.BASIC_ISO_DATE) + secret;
         // 解密token：使用AES算法解密token得到明文
         String plainText = ThirdPartyAesUtil.decrypt(token, key);
         // 格式校验：将明文按#分割，验证分割后是否为2部分且第一部分非空
