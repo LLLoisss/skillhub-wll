@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ComponentType } from 'react'
+﻿import { lazy, Suspense, type ComponentType } from 'react'
 import { createRouter, createRoute, createRootRoute, redirect } from '@tanstack/react-router'
 import { Layout } from './layout'
 import { getCurrentUser } from '@/api/client'
@@ -61,7 +61,6 @@ function createRoleProtectedRouteComponent<TModule extends Record<string, unknow
   }
 }
 
-const HomePage = createLazyRouteComponent(() => import('@/pages/home'), 'HomePage')
 const LoginPage = createLazyRouteComponent(() => import('@/pages/login'), 'LoginPage')
 const RegisterPage = createLazyRouteComponent(() => import('@/pages/register'), 'RegisterPage')
 const ResetPasswordPage = createLazyRouteComponent(() => import('@/pages/reset-password'), 'ResetPasswordPage')
@@ -70,8 +69,12 @@ const SearchPage = createLazyRouteComponent(() => import('@/pages/search'), 'Sea
 const TermsOfServicePage = createLazyRouteComponent(() => import('@/pages/terms'), 'TermsOfServicePage')
 const NamespacePage = createLazyRouteComponent(() => import('@/pages/namespace'), 'NamespacePage')
 const SkillDetailPage = createLazyRouteComponent(() => import('@/pages/skill-detail'), 'SkillDetailPage')
+const SuiteSearchPage = createLazyRouteComponent(() => import('@/pages/suites'), 'SuiteSearchPage')
+const SuiteDetailPage = createLazyRouteComponent(() => import('@/pages/suite-detail'), 'SuiteDetailPage')
 const DashboardPage = createLazyRouteComponent(() => import('@/pages/dashboard'), 'DashboardPage')
+const MyAssetsPage = createLazyRouteComponent(() => import('@/pages/my-assets'), 'MyAssetsPage')
 const MySkillsPage = createLazyRouteComponent(() => import('@/pages/dashboard/my-skills'), 'MySkillsPage')
+const MySuitesPage = createLazyRouteComponent(() => import('@/pages/dashboard/my-suites'), 'MySuitesPage')
 const PublishPage = createLazyRouteComponent(() => import('@/pages/dashboard/publish'), 'PublishPage')
 const MyNamespacesPage = createLazyRouteComponent(
   () => import('@/pages/dashboard/my-namespaces'),
@@ -156,13 +159,26 @@ const requireAuth = createRequireAuth(getCurrentUser)
 const landingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: SearchPage,
+  beforeLoad: ({ search }) => {
+    // "/" now only redirects to the "技能" (skills) landing destination per the nav restructuring.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    throw redirect({ to: '/skills', search: search as any })
+  },
 })
 
 const skillsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'skills',
-  component: HomePage,
+  validateSearch: (search: Record<string, unknown>): { q: string; label?: string; sort: string; page: number; starredOnly: boolean } => {
+    return {
+      q: normalizeSearchQuery(typeof search.q === 'string' ? search.q : ''),
+      label: typeof search.label === 'string' && search.label ? search.label : undefined,
+      sort: (search.sort as string) || 'newest',
+      page: Number(search.page) || 0,
+      starredOnly: search.starredOnly === true || search.starredOnly === 'true',
+    }
+  },
+  component: SearchPage,
 })
 
 const loginRoute = createRoute({
@@ -200,8 +216,9 @@ const searchRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'search',
   beforeLoad: ({ search }) => {
+    // Legacy "/search" links now land on the "/skills" browsing page.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    throw redirect({ to: '/', search: search as any })
+    throw redirect({ to: '/skills', search: search as any })
   },
   validateSearch: (search: Record<string, unknown>): { q: string; label?: string; sort: string; page: number; starredOnly: boolean } => {
     return {
@@ -237,6 +254,36 @@ const skillDetailRoute = createRoute({
   component: SkillDetailPage,
 })
 
+const suitesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'suites',
+  validateSearch: (search: Record<string, unknown>): { q: string; label?: string[]; sort: string; page: number; starredOnly: boolean } => {
+    const rawLabels = Array.isArray(search.label) ? search.label : typeof search.label === 'string' ? [search.label] : []
+    const labels = [...new Set(rawLabels.filter((label): label is string => typeof label === 'string' && !!label))]
+    return {
+      q: normalizeSearchQuery(typeof search.q === 'string' ? search.q : ''),
+      label: labels.length > 0 ? labels : undefined,
+      sort: (search.sort as string) || 'newest',
+      page: Number(search.page) || 0,
+      starredOnly: search.starredOnly === true || search.starredOnly === 'true',
+    }
+  },
+  component: SuiteSearchPage,
+})
+
+const suiteDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/suites/$namespace/$slug',
+  component: SuiteDetailPage,
+})
+
+const myAssetsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'my-assets',
+  beforeLoad: requireAuth,
+  component: MyAssetsPage,
+})
+
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'dashboard',
@@ -249,6 +296,13 @@ const dashboardSkillsRoute = createRoute({
   path: 'dashboard/skills',
   beforeLoad: requireAuth,
   component: MySkillsPage,
+})
+
+const dashboardSuitesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'dashboard/suites',
+  beforeLoad: requireAuth,
+  component: MySuitesPage,
 })
 
 const dashboardPublishRoute = createRoute({
@@ -290,6 +344,11 @@ const dashboardReviewsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'dashboard/reviews',
   beforeLoad: requireAuth,
+  validateSearch: (search: Record<string, unknown>): { type?: 'skill' | 'profile' | 'namespace' } => ({
+    type: search.type === 'skill' || search.type === 'profile' || search.type === 'namespace'
+      ? search.type
+      : undefined,
+  }),
   component: ReviewsPage,
 })
 
@@ -426,8 +485,12 @@ const routeTree = rootRoute.addChildren([
   termsRoute,
   namespaceRoute,
   skillDetailRoute,
+  suitesRoute,
+  suiteDetailRoute,
+  myAssetsRoute,
   dashboardRoute,
   dashboardSkillsRoute,
+  dashboardSuitesRoute,
   dashboardPublishRoute,
   dashboardNamespacesRoute,
   dashboardNamespaceMembersRoute,

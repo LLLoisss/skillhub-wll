@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+﻿import { useState, useRef, useEffect } from 'react'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/use-auth'
 import { UploadZone } from '@/features/publish/upload-zone'
+import { SuiteCreateForm } from '@/features/suite/suite-create-form'
 import {
   extractPrecheckWarnings,
   isFrontmatterFailureMessage,
@@ -25,7 +26,7 @@ import { Card } from '@/shared/ui/card'
 import { usePublishSkill } from '@/shared/hooks/use-skill-queries'
 import { useAllDepartments, useUserProfileByEmail } from '@/shared/hooks/use-department-queries'
 import { useVisibleLabels } from '@/shared/hooks/use-label-queries'
-import { useMyNamespaces } from '@/shared/hooks/use-namespace-queries'
+import { useMyActiveNamespaces } from '@/shared/hooks/use-namespace-queries'
 import { Input } from '@/shared/ui/input'
 import { ConfirmDialog } from '@/shared/components/confirm-dialog'
 import { DashboardPageHeader } from '@/shared/components/dashboard-page-header'
@@ -55,6 +56,8 @@ function flattenDepts(depts: Department[]): DeptOption[] {
 const EMPTY_NAMESPACE_VALUE = '__select_namespace__'
 const MAX_SELECTED_LABELS = 10
 
+type PublishTab = 'skill' | 'suite'
+
 function sortLabels(left: LabelItem, right: LabelItem) {
   return left.displayName.localeCompare(right.displayName, undefined, { sensitivity: 'base' })
     || left.slug.localeCompare(right.slug, undefined, { sensitivity: 'base' })
@@ -63,7 +66,10 @@ function sortLabels(left: LabelItem, right: LabelItem) {
 export function PublishPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const searchParams = useSearch({ strict: false }) as { tab?: string }
   const { user } = useAuth()
+  const initialPublishTab: PublishTab = searchParams.tab === 'suite' ? 'suite' : 'skill'
+  const [activePublishTab, setActivePublishTab] = useState<PublishTab>(initialPublishTab)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [namespaceSlug, setNamespaceSlug] = useState<string>('')
   const [selectedDept, setSelectedDept] = useState<DeptOption | null>(null)
@@ -80,7 +86,7 @@ export function PublishPage() {
   const labelRef = useRef<HTMLDivElement>(null)
   const labelInputRef = useRef<HTMLInputElement>(null)
 
-  const { data: namespaces, isLoading: isLoadingNamespaces } = useMyNamespaces()
+  const { data: namespaces, isLoading: isLoadingNamespaces } = useMyActiveNamespaces()
   const { data: allDepartments, isLoading: isLoadingAllDepartments } = useAllDepartments()
   const { data: userProfile } = useUserProfileByEmail(user?.email)
   const { data: visibleLabels, isLoading: isLoadingLabels } = useVisibleLabels()
@@ -88,17 +94,8 @@ export function PublishPage() {
   const isSuperAdmin = user?.platformRoles?.includes('SUPER_ADMIN') === true
 
   useEffect(() => {
-    if (userProfile) {
-      if (userProfile.name) {
-        setPublisherName(userProfile.name)
-      }
-      if (userProfile.departments && userProfile.departments.length > 0) {
-        const firstParent = userProfile.departments[0]
-        if (firstParent.children && firstParent.children.length > 0) {
-          const firstChild = firstParent.children[0]
-          setSelectedDept((prev) => prev || { label: `${firstParent.name}-${firstChild.name}`, primary: firstParent.name, secondary: firstChild.name })
-        }
-      }
+    if (userProfile?.name) {
+      setPublisherName(userProfile.name)
     }
   }, [userProfile])
 
@@ -247,8 +244,30 @@ export function PublishPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8 animate-fade-up">
-      <DashboardPageHeader title={t('publish.title')} subtitle={t('publish.subtitle')} />
+    <div className="max-w-3xl mx-auto space-y-8 animate-fade-up">
+      <div className="flex justify-center">
+        <div className="inline-flex rounded-lg border border-border bg-secondary/40 p-1">
+          <Button
+            type="button"
+            variant={activePublishTab === 'skill' ? 'default' : 'ghost'}
+            className="min-w-32"
+            onClick={() => setActivePublishTab('skill')}
+          >
+            {t('publish.title')}
+          </Button>
+          <Button
+            type="button"
+            variant={activePublishTab === 'suite' ? 'default' : 'ghost'}
+            className="min-w-32"
+            onClick={() => setActivePublishTab('suite')}
+          >
+            {t('publish.publishSuite')}
+          </Button>
+        </div>
+      </div>
+
+      <div className={activePublishTab === 'skill' ? 'space-y-8' : 'hidden'}>
+        <DashboardPageHeader title={t('publish.title')} subtitle={t('publish.subtitle')} />
 
       <Card className="p-4 bg-blue-500/5 border-blue-500/20">
         <div className="flex items-start gap-3">
@@ -462,8 +481,8 @@ export function PublishPage() {
                         >
                           {selected && <Check className="absolute left-2 h-4 w-4" />}
                           <span className="flex min-w-0 items-center gap-2">
-                            <span className="truncate">(@{label.displayName})</span>
-                            <span className="shrink-0 truncate text-xs text-muted-foreground">{label.slug}</span>
+                            <span className="truncate">{label.displayName}</span>
+                            <span className="shrink-0 truncate text-xs text-muted-foreground">(@{label.slug})</span>
                           </span>
                         </button>
                       )
@@ -532,6 +551,17 @@ export function PublishPage() {
           {publishMutation.isPending ? t('publish.publishing') : t('publish.confirm')}
         </Button>
       </Card>
+      </div>
+
+      <div className={activePublishTab === 'suite' ? 'space-y-8' : 'hidden'}>
+        <DashboardPageHeader
+          title={t('publish.publishSuite')}
+          subtitle={t('suites.createSuiteDescription')}
+        />
+        <Card className="p-8">
+          <SuiteCreateForm actionsClassName="block" fullWidthSubmit />
+        </Card>
+      </div>
 
       <ConfirmDialog
         open={warningDialogOpen}

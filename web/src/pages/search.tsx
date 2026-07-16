@@ -156,7 +156,7 @@ export function SearchPage() {
     if (!normalizedQuery) {
       startTransition(() => {
         navigate({
-          to: '/',
+          to: '/skills',
           search: { q: '', label: selectedLabel, sort, page: 0, starredOnly },
           replace: page === 0,
         });
@@ -167,7 +167,7 @@ export function SearchPage() {
     const timeoutId = window.setTimeout(() => {
       startTransition(() => {
         navigate({
-          to: '/',
+          to: '/skills',
           search: {
             q: normalizedQuery,
             label: selectedLabel,
@@ -188,7 +188,7 @@ export function SearchPage() {
     setQueryInput(query);
     startTransition(() => {
       navigate({
-        to: '/',
+        to: '/skills',
         search: {
           q: normalizedQuery,
           label: selectedLabel,
@@ -203,7 +203,7 @@ export function SearchPage() {
 
   const handleSortChange = (newSort: string) => {
     navigate({
-      to: '/',
+      to: '/skills',
       search: { q, label: selectedLabel, sort: newSort, page: 0, starredOnly },
     });
   };
@@ -211,7 +211,7 @@ export function SearchPage() {
   const handlePageChange = (newPage: number) => {
     blurActiveElement();
     navigate({
-      to: '/',
+      to: '/skills',
       search: { q, label: selectedLabel, sort, page: newPage, starredOnly },
     });
   };
@@ -219,7 +219,7 @@ export function SearchPage() {
   const handleLabelToggle = (label: string) => {
     const nextLabel = selectedLabel === label ? '' : label;
     navigate({
-      to: '/',
+      to: '/skills',
       search: { q, label: nextLabel, sort, page: 0, starredOnly },
     });
   };
@@ -236,7 +236,7 @@ export function SearchPage() {
     }
 
     navigate({
-      to: '/',
+      to: '/skills',
       search: {
         q,
         label: selectedLabel,

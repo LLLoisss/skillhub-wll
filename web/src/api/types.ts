@@ -1,4 +1,4 @@
-import type { components } from './generated/schema'
+﻿import type { components } from './generated/schema'
 
 export type User = Omit<components['schemas']['AuthMeResponse'], 'userId' | 'displayName' | 'platformRoles'> & {
   userId: string
@@ -53,7 +53,7 @@ export interface LocalLoginRequest {
 }
 
 export type ThirdPartyLoginMethod = 'TOKEN' | 'AUTH'
-export type ThirdPartyLoginPlatform = 'BOCOMCODE' | 'GUWP'
+export type ThirdPartyLoginPlatform = 'BOCOMCODE' | 'BOCOMWORK' | 'GUWP'
 
 export interface ThirdPartyLoginRequest {
   loginMethod: ThirdPartyLoginMethod
@@ -182,6 +182,7 @@ export interface SkillSummary {
   displayName: string
   summary?: string
   status?: string
+  hidden?: boolean
   downloadCount: number
   starCount: number
   ratingAvg?: number
@@ -201,6 +202,7 @@ export interface SkillSummary {
 }
 
 export type LabelItem = Omit<components['schemas']['SkillLabelDto'], 'slug' | 'type' | 'displayName'> & {
+  id?: number
   slug: string
   type: 'RECOMMENDED' | 'PRIVILEGED' | string
   displayName: string
@@ -305,6 +307,147 @@ export interface SkillTag {
   tagName: string
   versionId: number
   createdAt: string
+}
+
+// Expert Suite types
+export type SuiteStatus = 'ACTIVE' | 'ARCHIVED'
+
+
+export interface SuiteSkillItem {
+  skillId: number
+  namespace: string
+  slug: string
+  displayName: string
+  summary?: string
+  publisherName?: string
+  primaryDepartment?: string
+  ownerUsername?: string
+  secondaryDepartment?: string
+  status?: string
+  hidden?: boolean
+  headlineVersion?: SkillLifecycleVersion
+  downloadCount: number
+  starCount?: number
+  securityScanPassed: boolean
+  sortOrder: number
+}
+
+export interface SuitePreviewSkillItem {
+  skillId: number
+  displayName: string
+  summary?: string
+  downloadCount: number
+  starCount: number
+  ratingAvg?: number
+  ratingCount: number
+}
+
+export interface SuiteSummary {
+  id: number
+  namespace: string
+  slug: string
+  displayName: string
+  summary?: string
+  status: SuiteStatus
+  hidden: boolean
+  skillCount: number
+  starCount: number
+  starred: boolean
+  ratingAvg?: number
+  ratingCount: number
+  previewSkills: SuitePreviewSkillItem[]
+  labels: LabelItem[]
+  publisherName?: string
+  primaryDepartment?: string
+  secondaryDepartment?: string
+  ownerUsername?: string
+  ownerId: string
+  ownerDisplayName?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SuiteDetail {
+  id: number
+  namespace: string
+  slug: string
+  displayName: string
+  summary?: string
+  status: SuiteStatus
+  hidden: boolean
+  skillCount?: number
+  starCount: number
+  starred: boolean
+  ratingAvg?: number
+  ratingCount: number
+  publisherName?: string
+  primaryDepartment?: string
+  secondaryDepartment?: string
+  ownerUsername?: string
+  ownerId: string
+  ownerDisplayName?: string
+  canManage: boolean
+  canInteract: boolean
+  createdAt: string
+  updatedAt: string
+  skills: SuiteSkillItem[]
+  labels: LabelItem[]
+}
+
+export interface SuiteRatingStatus {
+  score: number
+  rated: boolean
+}
+
+export interface SuiteCreateResult {
+  id: number
+  namespace: string
+  slug: string
+  displayName: string
+  status: SuiteStatus
+}
+
+export interface CreateSuiteRequest {
+  namespace: string
+  publisherName?: string
+  primaryDepartment?: string
+  secondaryDepartment?: string
+  slug?: string
+  displayName: string
+  summary?: string
+  skillIds: number[]
+  labelSlugs?: string[]
+}
+
+export interface SuiteUpdateRequest {
+  summary?: string
+  labelSlugs?: string[]
+  addSkillIds?: number[]
+  removeSkillIds?: number[]
+}
+
+export interface SuiteSearchParams {
+  q?: string
+  namespace?: string
+  label?: string | string[]
+  sort?: string
+  page?: number
+  size?: number
+}
+
+export interface SuiteDeleteResult {
+  suiteId: number
+  namespace?: string
+  slug?: string
+  deleted: boolean
+}
+
+export interface SuiteLifecycleActionResult {
+  suiteId: number
+  namespace?: string
+  slug?: string
+  action: string
+  status: SuiteStatus
 }
 
 // Search and pagination
@@ -493,3 +636,4 @@ export interface NotificationPreferenceItem {
 export interface NotificationUnreadCount {
   count: number
 }
+

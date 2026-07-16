@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { FileCheck2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -22,8 +22,15 @@ import { ProfileReviewTable } from './profile-review-table'
 import { NamespaceReviewTable } from './namespace-review-table'
 
 type ReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+type ReviewType = 'skill' | 'profile' | 'namespace'
 type TimeSortDirection = 'ASC' | 'DESC'
 const PAGE_SIZE = 20
+
+function getInitialReviewType(): ReviewType {
+  if (typeof window === 'undefined') return 'skill'
+  const value = new URLSearchParams(window.location.search).get('type')
+  return value === 'profile' || value === 'namespace' ? value : 'skill'
+}
 
 /**
  * Dashboard review queue page. Each tab materializes one review status because
@@ -44,10 +51,16 @@ export function ReviewsPage() {
 
   const isSkillAdmin = hasRole('SKILL_ADMIN') || hasRole('SUPER_ADMIN')
   const isUserAdmin = hasRole('USER_ADMIN') || hasRole('SUPER_ADMIN')
-  const showTypeTabs = isSkillAdmin && isUserAdmin
-
-  // Determine default top-level tab
-  const defaultType = isSkillAdmin ? 'skill' : 'profile'
+  const availableReviewTypes: ReviewType[] = [
+    ...(isSkillAdmin ? (['skill'] as const) : []),
+    ...(isUserAdmin ? (['profile'] as const) : []),
+    ...(isSkillAdmin ? (['namespace'] as const) : []),
+  ]
+  const [activeType, setActiveType] = useState<ReviewType>(() => {
+    const initialType = getInitialReviewType()
+    return availableReviewTypes.includes(initialType) ? initialType : availableReviewTypes[0] ?? 'skill'
+  })
+  const resolvedActiveType = availableReviewTypes.includes(activeType) ? activeType : availableReviewTypes[0]
 
   const pendingQuery = useReviewList('PENDING', undefined, pages.PENDING, PAGE_SIZE, sortDirection, activeStatus === 'PENDING')
   const approvedQuery = useReviewList('APPROVED', undefined, pages.APPROVED, PAGE_SIZE, sortDirection, activeStatus === 'APPROVED')
@@ -70,6 +83,16 @@ export function ReviewsPage() {
       APPROVED: 0,
       REJECTED: 0,
     })
+  }
+
+  function handleReviewTypeChange(value: string) {
+    const nextType = value as ReviewType
+    setActiveType(nextType)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.set('type', nextType)
+      window.history.replaceState(null, '', url.toString())
+    }
   }
 
   function renderPagination(status: ReviewStatus, totalElements: number, totalPages: number) {
@@ -212,25 +235,36 @@ export function ReviewsPage() {
     )
   }
 
+  function renderActiveReviewContent(type: ReviewType | undefined) {
+    if (type === 'skill') return renderSkillReviewContent()
+    if (type === 'profile') return <ProfileReviewTable />
+    if (type === 'namespace') return <NamespaceReviewTable />
+    return null
+  }
+
   return (
     <div className="space-y-8 animate-fade-up">
       <DashboardPageHeader title={t('reviews.title')} subtitle={t('reviews.subtitle')} />
 
-      {showTypeTabs ? (
-        <Tabs defaultValue={defaultType}>
+      {availableReviewTypes.length > 1 ? (
+        <Tabs value={resolvedActiveType} onValueChange={handleReviewTypeChange}>
           <TabsList className="gap-2 rounded-2xl border-b-0 bg-muted/80 p-1 shadow-sm">
-            <TabsTrigger
-              value="skill"
-              className="mb-0 rounded-xl border-b-0 px-5 py-3 text-base font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground"
-            >
-              {t('reviews.typeSkill')}
-            </TabsTrigger>
-            <TabsTrigger
-              value="profile"
-              className="mb-0 rounded-xl border-b-0 px-5 py-3 text-base font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground"
-            >
-              {t('reviews.typeProfile')}
-            </TabsTrigger>
+            {isSkillAdmin && (
+              <TabsTrigger
+                value="skill"
+                className="mb-0 rounded-xl border-b-0 px-5 py-3 text-base font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground"
+              >
+                {t('reviews.typeSkill')}
+              </TabsTrigger>
+            )}
+            {isUserAdmin && (
+              <TabsTrigger
+                value="profile"
+                className="mb-0 rounded-xl border-b-0 px-5 py-3 text-base font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground"
+              >
+                {t('reviews.typeProfile')}
+              </TabsTrigger>
+            )}
             {isSkillAdmin && (
               <TabsTrigger
                 value="namespace"
@@ -240,44 +274,15 @@ export function ReviewsPage() {
               </TabsTrigger>
             )}
           </TabsList>
-          <TabsContent value="skill" className="mt-6">
-            {renderSkillReviewContent()}
-          </TabsContent>
-          <TabsContent value="profile" className="mt-6">
-            <ProfileReviewTable />
-          </TabsContent>
-          {isSkillAdmin && (
-            <TabsContent value="namespace" className="mt-6">
-              <NamespaceReviewTable />
+          {availableReviewTypes.map((type) => (
+            <TabsContent key={type} value={type} className="mt-6">
+              {renderActiveReviewContent(type)}
             </TabsContent>
-          )}
+          ))}
         </Tabs>
-      ) : isSkillAdmin ? (
-        <Tabs defaultValue="skill">
-          <TabsList className="gap-2 rounded-2xl border-b-0 bg-muted/80 p-1 shadow-sm">
-            <TabsTrigger
-              value="skill"
-              className="mb-0 rounded-xl border-b-0 px-5 py-3 text-base font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground"
-            >
-              {t('reviews.typeSkill')}
-            </TabsTrigger>
-            <TabsTrigger
-              value="namespace"
-              className="mb-0 rounded-xl border-b-0 px-5 py-3 text-base font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground"
-            >
-              {t('reviews.typeNamespace')}
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="skill" className="mt-6">
-            {renderSkillReviewContent()}
-          </TabsContent>
-          <TabsContent value="namespace" className="mt-6">
-            <NamespaceReviewTable />
-          </TabsContent>
-        </Tabs>
-      ) : isUserAdmin ? (
-        <ProfileReviewTable />
-      ) : null}
+      ) : (
+        renderActiveReviewContent(resolvedActiveType)
+      )}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/use-auth'
@@ -6,7 +6,6 @@ import { Button } from '@/shared/ui/button'
 import { Card } from '@/shared/ui/card'
 import { EmptyState } from '@/shared/components/empty-state'
 import { ConfirmDialog } from '@/shared/components/confirm-dialog'
-import { DashboardPageHeader } from '@/shared/components/dashboard-page-header'
 import { Pagination } from '@/shared/components/pagination'
 import { useArchiveSkill, useUnarchiveSkill, useWithdrawSkillReview } from '@/shared/hooks/use-skill-queries'
 import { useMySkills, useSubmitPromotion } from '@/shared/hooks/use-user-queries'
@@ -221,16 +220,6 @@ export function MySkillsPage() {
 
   return (
     <div className="space-y-8 animate-fade-up">
-      <DashboardPageHeader
-        title={t('mySkills.title')}
-        subtitle={t('mySkills.subtitle')}
-        actions={(
-          <Button size="lg" onClick={() => navigate({ to: '/dashboard/publish' })}>
-          {t('mySkills.publishNew')}
-          </Button>
-        )}
-      />
-
       <div className="flex flex-wrap gap-2">
         {availableFilters.map((option) => (
           <Button

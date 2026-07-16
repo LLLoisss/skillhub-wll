@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { SkillSummary, SkillDetail, SkillVersion, SkillVersionDetail, SkillFile, SearchParams, PagedResponse, PublishResult } from '@/api/types'
 import { fetchJson, fetchText, getCsrfHeaders, skillLifecycleApi, WEB_API_PREFIX } from '@/api/client'
 import { clearDeletedSkillQueries } from '@/features/skill/skill-delete-flow'
@@ -69,6 +69,23 @@ export function useSearchSkills(params: SearchParams) {
     queryKey: ['skills', 'search', params],
     queryFn: () => searchSkills(params),
     enabled: params.starredOnly !== true,
+  })
+}
+
+/** Paginated skill search for scrollable pickers. */
+export function useInfiniteSearchSkills(params: Omit<SearchParams, 'page'>, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: ['skills', 'search', 'infinite', params],
+    queryFn: ({ pageParam }) => searchSkills({ ...params, page: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, pages) => {
+      const loadedCount = pages.reduce((count, page) => count + page.items.length, 0)
+      const requestedPageSize = lastPage.size || params.size || 20
+      const hasMoreByTotal = loadedCount < lastPage.total
+      const currentPageIsFull = lastPage.items.length >= requestedPageSize
+      return hasMoreByTotal || currentPageIsFull ? lastPage.page + 1 : undefined
+    },
+    enabled: enabled && params.starredOnly !== true,
   })
 }
 

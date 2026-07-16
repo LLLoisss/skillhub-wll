@@ -24,14 +24,23 @@ export function getAppMainContentLayout(pathname: string): AppMainContentLayout 
     }
   }
 
-  if (pathname === '/search') {
+  if (
+    pathname === '/search'
+    || pathname === '/skills'
+    || pathname === '/suites'
+    || pathname.startsWith('/suites/')
+  ) {
     return {
       mainClassName: CENTERED_MAIN_CLASS_NAME,
       contentClassName: CENTERED_SEARCH_CONTENT_CLASS_NAME,
     }
   }
 
-  if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
+  if (
+    pathname === '/dashboard'
+    || pathname.startsWith('/dashboard/')
+    || pathname === '/my-assets'
+  ) {
     return {
       mainClassName: CENTERED_MAIN_CLASS_NAME,
       contentClassName: CENTERED_DASHBOARD_CONTENT_CLASS_NAME,

@@ -85,7 +85,7 @@ export function DashboardPage() {
         </Card>
         <Card className="p-5">
           <div className="text-sm text-muted-foreground">{t('dashboard.mySkillsTitle')}</div>
-          <Link to="/dashboard/skills" className="mt-2 inline-block font-semibold text-primary hover:underline">
+          <Link to="/my-assets" className="mt-2 inline-block font-semibold text-primary hover:underline">
             {t('dashboard.openMySkills')}
           </Link>
         </Card>
@@ -117,7 +117,7 @@ export function DashboardPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">{t('mySkills.title')}</h2>
-            <Link to="/dashboard/skills" className="text-sm font-semibold text-primary hover:underline">
+            <Link to="/my-assets" className="text-sm font-semibold text-primary hover:underline">
               {t('dashboard.openMySkills')}
             </Link>
           </div>
@@ -150,7 +150,7 @@ export function DashboardPage() {
                       </Link>
                     ))}
                     <Link
-                      to="/dashboard/skills"
+                      to="/my-assets"
                       className="flex min-h-20 flex-col items-center justify-center rounded-lg border border-dashed border-border/70 px-3 py-3 text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
                     >
                       <span className="text-lg font-semibold leading-none">{t('dashboard.previewMore')}</span>

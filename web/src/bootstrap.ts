@@ -1,3 +1,5 @@
+import { installPreloadErrorRecovery } from '@/shared/lib/preload-error-recovery'
+
 // Polyfill Object.hasOwn for older browsers (e.g. Edge < 93)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 if (typeof (Object as any).hasOwn !== 'function') {
@@ -5,6 +7,10 @@ if (typeof (Object as any).hasOwn !== 'function') {
   (Object as any).hasOwn = (obj: object, prop: PropertyKey): boolean =>
     Object.prototype.hasOwnProperty.call(obj, prop)
 }
+
+// Register before runtime configuration and route modules start loading so a stale
+// hashed chunk can recover by refreshing onto the latest application entry once.
+installPreloadErrorRecovery()
 
 /**
  * Bootstraps runtime configuration before the React bundle mounts.

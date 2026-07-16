@@ -50,6 +50,16 @@ export function useMyNamespaces() {
   })
 }
 
+export function useMyActiveNamespaces() {
+  return useQuery({
+    queryKey: ['namespaces', 'my', 'active'],
+    queryFn: async () => {
+      const namespaces = await getMyNamespaces()
+      return namespaces.filter((ns) => ns.status === 'ACTIVE')
+    },
+  })
+}
+
 export function useCreateNamespace() {
   const queryClient = useQueryClient()
 

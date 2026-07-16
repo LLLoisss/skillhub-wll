@@ -51,10 +51,11 @@ export function Layout() {
     exact?: boolean
     auth?: boolean
   }> = [
-    { label: t('nav.landing'), to: '/', exact: true },
+    { label: t('nav.landing'), to: '/skills', exact: true },
+    { label: t('nav.suites'), to: '/suites', exact: true },
     { label: t('nav.publish'), to: '/dashboard/publish', auth: true },
     { label: t('nav.dashboard'), to: '/dashboard', auth: true },
-    { label: t('nav.mySkills'), to: '/dashboard/skills', auth: true },
+    { label: t('nav.mySkills'), to: '/my-assets', auth: true },
   ]
 
   const isActive = (to: string, exact?: boolean) => {
@@ -76,7 +77,11 @@ export function Layout() {
 
       {/* Header */}
       <header className={getAppHeaderClassName(isHeaderElevated)} style={{ borderColor: 'hsl(var(--border))' }}>
-        <Link to="/" className="text-xl font-semibold tracking-tight text-brand-gradient">
+        <Link
+          to="/skills"
+          search={{ q: '', sort: 'newest', page: 0, starredOnly: false }}
+          className="text-xl font-semibold tracking-tight text-brand-gradient"
+        >
           SkillHub
         </Link>
 

@@ -16,7 +16,11 @@ const queryClient = new QueryClient({
       staleTime: 30 * 1000,
       retry: (failureCount, error) => {
         // Don't retry on 401/403/404
-        if (error instanceof Error && /HTTP (401|403|404)/.test(error.message)) {
+        const status = error && typeof error === 'object' && 'status' in error ? error.status : undefined
+        if (
+          (typeof status === 'number' && [401, 403, 404].includes(status))
+          || (error instanceof Error && /HTTP (401|403|404)/.test(error.message))
+        ) {
           return false
         }
         return failureCount < 1

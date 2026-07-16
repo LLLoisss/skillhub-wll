@@ -32,7 +32,7 @@ const ROLE_OPTIONS: NamespaceRole[] = ['MEMBER', 'ADMIN']
 
 /**
  * Handles the namespace member invitation flow, including optional candidate
- * lookup and direct user-id entry. Local state is reset on close so reopening
+ * lookup and selected-user display. Local state is reset on close so reopening
  * the dialog never leaks stale search or validation state from prior attempts.
  */
 export function AddNamespaceMemberDialog({ slug, children }: AddNamespaceMemberDialogProps) {
@@ -42,6 +42,7 @@ export function AddNamespaceMemberDialog({ slug, children }: AddNamespaceMemberD
   const [searchInput, setSearchInput] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
   const [userId, setUserId] = useState('')
+  const [userEmail, setUserEmail] = useState('')
   const [role, setRole] = useState<NamespaceRole>('MEMBER')
   const [userIdError, setUserIdError] = useState<string | null>(null)
   const [searchError, setSearchError] = useState<string | null>(null)
@@ -56,6 +57,7 @@ export function AddNamespaceMemberDialog({ slug, children }: AddNamespaceMemberD
     setSearchInput('')
     setAppliedSearch('')
     setUserId('')
+    setUserEmail('')
     setRole('MEMBER')
     setUserIdError(null)
     setSearchError(null)
@@ -96,7 +98,7 @@ export function AddNamespaceMemberDialog({ slug, children }: AddNamespaceMemberD
       })
       toast.success(
         t('members.addSuccessTitle'),
-        t('members.addSuccessDescription', { userId: normalizedUserId }),
+        t('members.addSuccessDescription', { email: userEmail }),
       )
       handleOpenChange(false)
     } catch (error) {
@@ -174,6 +176,7 @@ export function AddNamespaceMemberDialog({ slug, children }: AddNamespaceMemberD
                         size="sm"
                         onClick={() => {
                           setUserId(candidate.userId)
+                          setUserEmail(candidate.email || '')
                           setUserIdError(null)
                         }}
                       >
@@ -188,33 +191,18 @@ export function AddNamespaceMemberDialog({ slug, children }: AddNamespaceMemberD
             </div>
           ) : null}
 
-          {/* <div className="space-y-2">
-            <Label htmlFor="member-user-id">{t('members.manualUserIdLabel')}</Label>
+          <div className="space-y-2">
+            <Label htmlFor="member-email">{t('members.userEmailLabel')}</Label>
             <Input
-              id="member-user-id"
-              value={userId}
-              placeholder={t('members.manualUserIdPlaceholder')}
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              onChange={(event) => {
-                setUserId(event.target.value)
-                if (userIdError) {
-                  setUserIdError(null)
-                }
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault()
-                  handleAddMember()
-                }
-              }}
+              id="member-email"
+              type="email"
+              value={userEmail}
+              placeholder={t('members.userEmailPlaceholder')}
+              readOnly
               aria-invalid={userIdError ? 'true' : 'false'}
             />
-            <p className={`text-xs ${userIdError ? 'text-red-600' : 'text-muted-foreground'}`}>
-              {userIdError ?? t('members.manualUserIdHint')}
-            </p>
-          </div> */}
+            {userIdError ? <p className="text-xs text-red-600">{userIdError}</p> : null}
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="member-role">{t('members.roleLabel')}</Label>
