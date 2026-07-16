@@ -219,15 +219,13 @@ export function SuiteDetailPage() {
       </div>
 
       <EditSuiteDialog suite={suite} namespace={namespace} slug={slug} open={editDialogOpen} onOpenChange={setEditDialogOpen} />
-      {addSkillsDrawerOpen && (
-        <AddSuiteSkillsDrawer
-          suite={suite}
-          namespace={namespace}
-          slug={slug}
-          open={addSkillsDrawerOpen}
-          onOpenChange={setAddSkillsDrawerOpen}
-        />
-      )}
+      <AddSuiteSkillsDrawer
+        suite={suite}
+        namespace={namespace}
+        slug={slug}
+        open={addSkillsDrawerOpen}
+        onOpenChange={setAddSkillsDrawerOpen}
+      />
     </div>
   )
 }

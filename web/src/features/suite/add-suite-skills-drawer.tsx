@@ -14,9 +14,10 @@ import { isSelectableSuiteSkill } from './suite-skill-eligibility'
 
 const MAX_SUITE_SKILLS = 50
 const SEARCH_PAGE_SIZE = 20
+export const ADD_SUITE_SKILLS_DRAWER_TRANSITION_MS = 520
 
 export const ADD_SUITE_SKILLS_DRAWER_CLASS_NAME =
-  'left-auto right-0 top-0 flex h-screen max-h-screen supports-[height:100dvh]:h-dvh supports-[height:100dvh]:max-h-[100dvh] w-[min(100vw,28rem)] max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-y-0 border-r-0 p-0 shadow-2xl'
+  'suite-drawer-motion left-auto right-0 top-0 flex h-screen max-h-screen supports-[height:100dvh]:h-dvh supports-[height:100dvh]:max-h-[100dvh] w-[min(100vw,28rem)] max-w-none flex-col gap-0 overflow-hidden rounded-none border-y-0 border-r-0 p-0 shadow-2xl'
 
 interface AddSuiteSkillsDrawerProps {
   suite: SuiteDetail
@@ -42,6 +43,8 @@ export function AddSuiteSkillsDrawer({ suite, namespace, slug, open, onOpenChang
   const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [selectedSkillIds, setSelectedSkillIds] = useState<number[]>([])
+  const [isMounted, setIsMounted] = useState(open)
+  const [isVisible, setIsVisible] = useState(false)
   const resultsRef = useRef<HTMLDivElement>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const addSkillsMutation = useAddSuiteSkills()
@@ -79,6 +82,31 @@ export function AddSuiteSkillsDrawer({ suite, namespace, slug, open, onOpenChang
     if (open) {
       setQuery('')
       setSelectedSkillIds([])
+    }
+  }, [open])
+
+  useEffect(() => {
+    let firstAnimationFrameId: number | undefined
+    let secondAnimationFrameId: number | undefined
+    let closeTimeoutId: number | undefined
+
+    if (open) {
+      setIsMounted(true)
+      firstAnimationFrameId = window.requestAnimationFrame(() => {
+        secondAnimationFrameId = window.requestAnimationFrame(() => setIsVisible(true))
+      })
+    } else {
+      setIsVisible(false)
+      closeTimeoutId = window.setTimeout(
+        () => setIsMounted(false),
+        ADD_SUITE_SKILLS_DRAWER_TRANSITION_MS,
+      )
+    }
+
+    return () => {
+      if (firstAnimationFrameId !== undefined) window.cancelAnimationFrame(firstAnimationFrameId)
+      if (secondAnimationFrameId !== undefined) window.cancelAnimationFrame(secondAnimationFrameId)
+      if (closeTimeoutId !== undefined) window.clearTimeout(closeTimeoutId)
     }
   }, [open])
 
@@ -143,8 +171,11 @@ export function AddSuiteSkillsDrawer({ suite, namespace, slug, open, onOpenChang
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={ADD_SUITE_SKILLS_DRAWER_CLASS_NAME}>
+    <Dialog open={isMounted} onOpenChange={onOpenChange}>
+      <DialogContent
+        data-state={isVisible ? 'open' : 'closed'}
+        className={`${ADD_SUITE_SKILLS_DRAWER_CLASS_NAME} ${isVisible ? '' : 'pointer-events-none'}`}
+      >
         <DialogHeader className="shrink-0 border-b border-border/60 px-6 py-5 pr-12 text-left">
           <DialogTitle className="text-left">{t('suites.appendSuiteSkills')}</DialogTitle>
         </DialogHeader>

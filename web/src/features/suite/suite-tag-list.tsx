@@ -10,6 +10,7 @@ import { toast } from '@/shared/lib/toast'
 import { cn } from '@/shared/lib/utils'
 import { useVisibleLabels } from '@/shared/hooks/use-label-queries'
 import { useDeleteSuiteLabel, usePutSuiteLabels, useSuiteLabels } from './use-suite-queries'
+import { SUITE_DIALOG_ANIMATION_CLASS_NAME, useAnimatedDialogPresence } from './use-animated-dialog-presence'
 
 const MAX_LABELS = 10
 
@@ -52,6 +53,7 @@ export function SuiteTagList({ namespace, slug, canManage }: SuiteTagListProps) 
   const putLabelsMutation = usePutSuiteLabels()
   const deleteLabelMutation = useDeleteSuiteLabel()
   const [addDialogOpen, setAddDialogOpen] = useState(false)
+  const { isMounted: addDialogMounted, isVisible: addDialogVisible } = useAnimatedDialogPresence(addDialogOpen)
   const [selectedLabelSlugs, setSelectedLabelSlugs] = useState<string[]>([])
   const [isSavingLabels, setIsSavingLabels] = useState(false)
   const [labelToDelete, setLabelToDelete] = useState<{ slug: string; displayName: string } | null>(null)
@@ -164,13 +166,16 @@ export function SuiteTagList({ namespace, slug, canManage }: SuiteTagListProps) 
       )}
 
       <Dialog
-        open={addDialogOpen}
+        open={addDialogMounted}
         onOpenChange={(nextOpen) => {
           setAddDialogOpen(nextOpen)
           if (!nextOpen) setSelectedLabelSlugs([])
         }}
       >
-        <DialogContent>
+        <DialogContent
+          data-state={addDialogVisible ? 'open' : 'closed'}
+          className={`${SUITE_DIALOG_ANIMATION_CLASS_NAME} ${addDialogVisible ? '' : 'pointer-events-none'}`}
+        >
           <DialogHeader>
             <DialogTitle>{t('suites.tags.add')}</DialogTitle>
             <DialogDescription>{t('suites.tags.addDescription')}</DialogDescription>

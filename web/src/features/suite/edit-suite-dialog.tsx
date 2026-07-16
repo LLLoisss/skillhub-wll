@@ -12,6 +12,7 @@ import { useAuth } from '@/features/auth/use-auth'
 import { useVisibleLabels } from '@/shared/hooks/use-label-queries'
 import { SuiteLabelPicker } from './suite-label-picker'
 import { useUpdateSuite } from './use-suite-queries'
+import { SUITE_DIALOG_ANIMATION_CLASS_NAME, useAnimatedDialogPresence } from './use-animated-dialog-presence'
 
 const MAX_LABELS = 10
 
@@ -33,6 +34,7 @@ export function EditSuiteDialog({ suite, namespace, slug, open, onOpenChange }: 
   const { t } = useTranslation()
   const [summary, setSummary] = useState(suite.summary ?? '')
   const [selectedLabelSlugs, setSelectedLabelSlugs] = useState(() => suite.labels.map((label) => label.slug))
+  const { isMounted, isVisible } = useAnimatedDialogPresence(open)
   const { user } = useAuth()
   const { data: visibleLabels } = useVisibleLabels(open)
   const updateMutation = useUpdateSuite()
@@ -81,8 +83,11 @@ export function EditSuiteDialog({ suite, namespace, slug, open, onOpenChange }: 
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] w-[min(calc(100vw-2rem),44rem)] overflow-y-auto">
+    <Dialog open={isMounted} onOpenChange={onOpenChange}>
+      <DialogContent
+        data-state={isVisible ? 'open' : 'closed'}
+        className={`max-h-[calc(100vh-2rem)] w-[min(calc(100vw-2rem),44rem)] overflow-y-auto ${SUITE_DIALOG_ANIMATION_CLASS_NAME} ${isVisible ? '' : 'pointer-events-none'}`}
+      >
         <DialogHeader>
           <DialogTitle>{t('suites.editSuite')}</DialogTitle>
           <DialogDescription>{t('suites.editSuiteDescription')}</DialogDescription>
