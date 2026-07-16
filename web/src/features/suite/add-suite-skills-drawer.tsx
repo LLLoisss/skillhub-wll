@@ -15,6 +15,9 @@ import { isSelectableSuiteSkill } from './suite-skill-eligibility'
 const MAX_SUITE_SKILLS = 50
 const SEARCH_PAGE_SIZE = 20
 
+export const ADD_SUITE_SKILLS_DRAWER_CLASS_NAME =
+  'left-auto right-0 top-0 flex h-screen max-h-screen supports-[height:100dvh]:h-dvh supports-[height:100dvh]:max-h-[100dvh] w-[min(100vw,28rem)] max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-y-0 border-r-0 p-0 shadow-2xl'
+
 interface AddSuiteSkillsDrawerProps {
   suite: SuiteDetail
   namespace: string
@@ -141,7 +144,7 @@ export function AddSuiteSkillsDrawer({ suite, namespace, slug, open, onOpenChang
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="left-auto right-0 top-0 flex h-dvh max-h-none w-[min(100vw,28rem)] max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-y-0 border-r-0 p-0 shadow-2xl">
+      <DialogContent className={ADD_SUITE_SKILLS_DRAWER_CLASS_NAME}>
         <DialogHeader className="shrink-0 border-b border-border/60 px-6 py-5 pr-12 text-left">
           <DialogTitle className="text-left">{t('suites.appendSuiteSkills')}</DialogTitle>
         </DialogHeader>
