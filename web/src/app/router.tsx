@@ -257,12 +257,15 @@ const skillDetailRoute = createRoute({
 const suitesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'suites',
-  validateSearch: (search: Record<string, unknown>): { q: string; label?: string[]; sort: string; page: number; starredOnly: boolean } => {
-    const rawLabels = Array.isArray(search.label) ? search.label : typeof search.label === 'string' ? [search.label] : []
-    const labels = [...new Set(rawLabels.filter((label): label is string => typeof label === 'string' && !!label))]
+  validateSearch: (search: Record<string, unknown>): { q: string; label?: string; sort: string; page: number; starredOnly: boolean } => {
+    const label = Array.isArray(search.label)
+      ? search.label.find((item): item is string => typeof item === 'string' && !!item)
+      : typeof search.label === 'string' && search.label
+        ? search.label
+        : undefined
     return {
       q: normalizeSearchQuery(typeof search.q === 'string' ? search.q : ''),
-      label: labels.length > 0 ? labels : undefined,
+      label,
       sort: (search.sort as string) || 'newest',
       page: Number(search.page) || 0,
       starredOnly: search.starredOnly === true || search.starredOnly === 'true',

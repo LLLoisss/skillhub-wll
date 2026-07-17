@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { SuiteSummary } from '@/api/types'
@@ -16,7 +16,7 @@ import { APP_SHELL_PAGE_CLASS_NAME } from '@/app/page-shell-style'
 
 const PAGE_SIZE = 8
 
-function filterStarredSuites(suites: SuiteSummary[], query: string, labels: string[]) {
+function filterStarredSuites(suites: SuiteSummary[], query: string) {
   const normalizedQuery = query.trim().toLowerCase()
   return suites.filter((suite) => {
     if (!isPublicSuite(suite)) {
@@ -25,8 +25,7 @@ function filterStarredSuites(suites: SuiteSummary[], query: string, labels: stri
     const matchesQuery = !normalizedQuery || [suite.displayName, suite.summary, suite.namespace, suite.slug]
       .filter(Boolean)
       .some((value) => value!.toLowerCase().includes(normalizedQuery))
-    const matchesLabels = labels.every((labelSlug) => suite.labels.some((label) => label.slug === labelSlug))
-    return matchesQuery && matchesLabels
+    return matchesQuery
   })
 }
 
@@ -45,37 +44,33 @@ export function SuiteSearchPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useRouterState({ select: (state) => state.location })
-  const searchParams = useSearch({ strict: false }) as { q?: string; label?: string | string[]; sort?: string; page?: number; starredOnly?: boolean }
+  const searchParams = useSearch({ strict: false }) as { q?: string; label?: string; sort?: string; page?: number; starredOnly?: boolean }
   const { isAuthenticated } = useAuth()
 
   const q = searchParams.q ?? ''
-  const selectedLabels = useMemo(() => {
-    const labels = Array.isArray(searchParams.label) ? searchParams.label : searchParams.label ? [searchParams.label] : []
-    return [...new Set(labels.filter(Boolean))]
-  }, [searchParams.label])
+  const selectedLabel = searchParams.label ?? ''
   const sort = searchParams.sort || 'newest'
   const page = searchParams.page ?? 0
   const starredOnly = searchParams.starredOnly ?? false
   const [queryInput, setQueryInput] = useState(q)
 
-  const { data, isLoading } = useSearchSuites({ q, label: selectedLabels, sort, page, size: PAGE_SIZE })
+  const { data, isLoading } = useSearchSuites({ q, label: selectedLabel || undefined, sort, page, size: PAGE_SIZE })
   const { data: labels } = useVisibleLabels()
   const { data: starredSuites, isLoading: isLoadingStarred } = useMySuiteStars(starredOnly && isAuthenticated)
-  const filteredStarredSuites = starredOnly ? sortStarredSuites(filterStarredSuites(starredSuites ?? [], q, selectedLabels), sort) : []
+  const filteredStarredSuites = starredOnly ? sortStarredSuites(filterStarredSuites(starredSuites ?? [], q), sort) : []
   const displayItems = starredOnly
     ? filteredStarredSuites.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
     : (data?.items ?? []).filter(isPublicSuite)
   const isPageLoading = starredOnly ? isLoadingStarred : isLoading
   const resultCount = starredOnly ? filteredStarredSuites.length : data?.total ?? 0
   const totalPages = starredOnly ? Math.ceil(filteredStarredSuites.length / PAGE_SIZE) : data ? Math.max(Math.ceil(data.total / data.size), 1) : 0
-  const hasActiveFilters = starredOnly || selectedLabels.length > 0
 
-  const navigateToSearch = (next: { q?: string; label?: string[]; sort?: string; page?: number; starredOnly?: boolean }) => {
+  const navigateToSearch = (next: { q?: string; label?: string; sort?: string; page?: number; starredOnly?: boolean }) => {
     navigate({
       to: '/suites',
       search: {
         q: next.q ?? q,
-        label: next.label ?? selectedLabels,
+        label: next.label ?? selectedLabel,
         sort: next.sort ?? sort,
         page: next.page ?? page,
         starredOnly: next.starredOnly ?? starredOnly,
@@ -97,10 +92,8 @@ export function SuiteSearchPage() {
   }
 
   const handleLabelToggle = (label: string) => {
-    const nextLabels = selectedLabels.includes(label)
-      ? selectedLabels.filter((selectedLabel) => selectedLabel !== label)
-      : [...selectedLabels, label]
-    navigateToSearch({ label: nextLabels, page: 0 })
+    const nextLabel = selectedLabel === label ? '' : label
+    navigateToSearch({ label: nextLabel, page: 0 })
   }
 
   const handleStarredToggle = () => {
@@ -109,10 +102,6 @@ export function SuiteSearchPage() {
       return
     }
     navigateToSearch({ starredOnly: !starredOnly, page: 0 })
-  }
-
-  const handleClearFilters = () => {
-    navigateToSearch({ label: [], starredOnly: false, page: 0 })
   }
 
   const handleSuiteClick = (namespace: string, slug: string) => {
@@ -154,21 +143,16 @@ export function SuiteSearchPage() {
         <Button variant={starredOnly ? 'default' : 'outline'} size="sm" onClick={handleStarredToggle}>
           {t('suites.filterStarred')}
         </Button>
-        {labels?.map((label) => (
+        {!starredOnly && labels?.map((label) => (
           <Button
             key={label.slug}
-            variant={selectedLabels.includes(label.slug) ? 'default' : 'outline'}
+            variant={selectedLabel === label.slug ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleLabelToggle(label.slug)}
           >
             {label.displayName}
           </Button>
         ))}
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-            {t('suites.clearFilters')}
-          </Button>
-        )}
       </div>
 
       {isPageLoading ? (

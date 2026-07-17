@@ -91,7 +91,7 @@ export function SuiteDetailPage() {
     }
     navigate({
       to: '/suites',
-      search: { q: '', label: [], sort: 'newest', page: 0, starredOnly: false },
+      search: { q: '', label: '', sort: 'newest', page: 0, starredOnly: false },
     })
   }
 

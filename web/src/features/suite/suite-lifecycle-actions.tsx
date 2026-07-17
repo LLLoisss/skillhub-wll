@@ -88,7 +88,7 @@ export function SuiteLifecycleActions({ suite, namespace, slug, canManage }: Sui
     try {
       await deleteMutation.mutateAsync({ namespace, slug })
       toast.success(t('suites.deleteSuccessTitle'))
-      await navigate({ to: '/suites', search: { q: '', label: [], sort: 'newest', page: 0, starredOnly: false } })
+      await navigate({ to: '/suites', search: { q: '', label: '', sort: 'newest', page: 0, starredOnly: false } })
     } catch (error) {
       toast.error(t('suites.deleteErrorTitle'), error instanceof Error ? error.message : undefined)
       throw error
