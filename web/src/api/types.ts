@@ -351,6 +351,7 @@ export interface SuiteSummary {
   status: SuiteStatus
   hidden: boolean
   skillCount: number
+  downloadCount: number
   starCount: number
   starred: boolean
   ratingAvg?: number
@@ -376,6 +377,7 @@ export interface SuiteDetail {
   status: SuiteStatus
   hidden: boolean
   skillCount?: number
+  downloadCount: number
   starCount: number
   starred: boolean
   ratingAvg?: number

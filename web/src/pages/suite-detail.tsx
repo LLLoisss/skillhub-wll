@@ -58,7 +58,6 @@ export function SuiteDetailPage() {
 
   const canManage = suite.canManage || Boolean(user && suite.ownerId === user.userId) || isSuperAdmin
   const canInteract = suite.canInteract ?? true
-  const downloadCount = suite.skills.reduce((total, skill) => total + skill.downloadCount, 0)
   const ownerName = suite.publisherName || suite.ownerDisplayName
 
   const handleToggleStar = () => {
@@ -273,7 +272,7 @@ export function SuiteDetailPage() {
         <Card className="p-5 space-y-5">
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">{t('skillDetail.downloads')}</div>
-            <div className="font-semibold text-foreground">{formatCompactCount(downloadCount)}</div>
+            <div className="font-semibold text-foreground">{formatCompactCount(suite.downloadCount)}</div>
           </div>
 
           <div className="h-px bg-border/40" />

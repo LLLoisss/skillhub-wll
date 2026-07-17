@@ -73,6 +73,22 @@ export function SuiteCard({ suite, onClick }: SuiteCardProps) {
               <Layers className="h-3.5 w-3.5" aria-hidden="true" />
               {formatCompactCount(suite.skillCount)}
             </span>
+            {suite.downloadCount > 0 && (
+              <>
+                <span aria-hidden="true" className="text-border">|</span>
+                <span className="flex shrink-0 items-center gap-1" title={t('skillDetail.downloads')}>
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+                    />
+                  </svg>
+                  {formatCompactCount(suite.downloadCount)}
+                </span>
+              </>
+            )}
             <span aria-hidden="true" className="text-border">|</span>
             <span className={`flex shrink-0 items-center gap-1 ${suite.starred ? 'font-semibold text-primary' : ''}`}>
               <Bookmark className={`h-3.5 w-3.5 ${suite.starred ? 'fill-current' : ''}`} aria-hidden="true" />
