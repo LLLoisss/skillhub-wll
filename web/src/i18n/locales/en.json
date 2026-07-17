@@ -1728,6 +1728,7 @@
     "review": "Review",
     "promotion": "Promotion",
     "report": "Report",
+    "suite": "Expert Suite",
     "timeAgo": "{{time}} ago",
     "preferences": {
       "title": "Notification Settings",
@@ -1739,7 +1740,9 @@
       "promotion": "Promotion Notifications",
       "promotionDesc": "Notify on promotion request, approval, or rejection",
       "report": "Report Notifications",
-      "reportDesc": "Notify on report submission or resolution"
+      "reportDesc": "Notify on report submission or resolution",
+      "suite": "Expert Suite Notifications",
+      "suiteDesc": "Notify when an archived, hidden, or deleted skill is removed from an expert suite"
     }
   }
 }

@@ -613,7 +613,7 @@ export interface AuditLogItem {
 // Notification types
 export interface NotificationItem {
   id: number
-  category: 'PUBLISH' | 'REVIEW' | 'PROMOTION' | 'REPORT'
+  category: 'PUBLISH' | 'REVIEW' | 'PROMOTION' | 'REPORT' | 'SUITE'
   eventType: string
   title: string
   bodyJson?: string

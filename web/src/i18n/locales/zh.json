@@ -1729,6 +1729,7 @@
     "review": "审核",
     "promotion": "提升",
     "report": "举报",
+    "suite": "专家套件",
     "timeAgo": "{{time}}前",
     "preferences": {
       "title": "通知设置",
@@ -1740,7 +1741,9 @@
       "promotion": "提升通知",
       "promotionDesc": "提升申请提交、通过或拒绝时通知",
       "report": "举报通知",
-      "reportDesc": "举报提交或处理完成时通知"
+      "reportDesc": "举报提交或处理完成时通知",
+      "suite": "专家套件通知",
+      "suiteDesc": "关联技能因归档、隐藏或删除而从专家套件移除时通知"
     }
   }
 }

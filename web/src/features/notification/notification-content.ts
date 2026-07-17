@@ -11,6 +11,14 @@ type NotificationBody = {
   displayName?: string
   slug?: string
   reviewComment?: string
+  action?: string
+  suiteName?: string
+  message?: string
+}
+
+type DissociationAction = {
+  zh: string
+  en: string
 }
 
 function parseBody(bodyJson?: string): NotificationBody {
@@ -27,6 +35,24 @@ function parseBody(bodyJson?: string): NotificationBody {
 
 function isChinese(language: string) {
   return language.toLowerCase().startsWith('zh')
+}
+
+function resolveDissociationAction(action?: string): DissociationAction | undefined {
+  switch (action?.toUpperCase()) {
+    case 'ARCHIVE':
+    case 'ARCHIVED':
+      return { zh: '归档', en: 'archived' }
+    case 'HIDE':
+    case 'HIDDEN':
+      return { zh: '隐藏', en: 'hidden' }
+    case 'DELETE':
+    case 'DELETED':
+    case 'DELETE_SKILL':
+    case 'DELETE_SKILL_HARD':
+      return { zh: '删除', en: 'deleted' }
+    default:
+      return undefined
+  }
 }
 
 export function resolveNotificationDisplay(item: NotificationItem, language: string): NotificationDisplay {
@@ -82,6 +108,24 @@ export function resolveNotificationDisplay(item: NotificationItem, language: str
         title: zh ? '技能发布成功' : 'Skill published',
         description: skillName ? (zh ? `${skillName}${versionSuffix} 已发布。` : `${skillName}${versionSuffix} was published.`) : '',
       }
+    case 'SKILL_SUITE_DISSOCIATED': {
+      const action = resolveDissociationAction(body.action)
+      if (!action) {
+        return {
+          title: item.title,
+          description: body.message ?? '',
+        }
+      }
+
+      const skillLabel = skillName || (zh ? '该技能' : 'The skill')
+      const suiteName = body.suiteName ?? ''
+      return {
+        title: zh ? `技能已${action.zh}` : `Skill ${action.en}`,
+        description: zh
+          ? `${skillLabel}已${action.zh}，已与${suiteName ? `专家套件“${suiteName}”` : '关联的专家套件'}解除关联。`
+          : `${skillLabel} was ${action.en} and removed from ${suiteName ? `the expert suite "${suiteName}"` : 'its associated expert suites'}.`,
+      }
+    }
     case 'NAMESPACE_APPLICATION_SUBMITTED': {
       const nsName = body.displayName ?? body.slug ?? ''
       return {
