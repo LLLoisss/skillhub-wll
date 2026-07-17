@@ -33,11 +33,6 @@ interface SkillOption {
   namespace: string
 }
 
-function matchesQuery(skill: SkillOption, query: string) {
-  const normalized = query.trim().toLocaleLowerCase()
-  return !normalized || `${skill.displayName} ${skill.namespace}`.toLocaleLowerCase().includes(normalized)
-}
-
 /** Side drawer for associating additional namespace skills with an expert suite. */
 export function AddSuiteSkillsDrawer({ suite, namespace, slug, open, onOpenChange }: AddSuiteSkillsDrawerProps) {
   const { t } = useTranslation()
@@ -66,17 +61,17 @@ export function AddSuiteSkillsDrawer({ suite, namespace, slug, open, onOpenChang
   const skillOptions = useMemo(() => {
     const options = new Map<number, SkillOption>()
 
-    for (const skill of suite.skills) {
-      const option = { id: skill.skillId, displayName: skill.displayName, namespace: skill.namespace }
-      if (matchesQuery(option, query)) options.set(option.id, option)
-    }
     for (const skill of (data?.pages.flatMap((page) => page.items) ?? []).filter(isSelectableSuiteSkill)) {
-      const option = { id: skill.id, displayName: skill.displayName, namespace: skill.namespace }
-      if (matchesQuery(option, query)) options.set(option.id, option)
+      const option = {
+        id: skill.id,
+        displayName: skill.displayName,
+        namespace: skill.namespace,
+      }
+      options.set(option.id, option)
     }
 
     return [...options.values()]
-  }, [data?.pages, query, suite.skills])
+  }, [data?.pages])
 
   useEffect(() => {
     if (open) {

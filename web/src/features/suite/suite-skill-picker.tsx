@@ -40,19 +40,6 @@ function toPickerItem(skill: SkillSummary): SuiteSkillPickerItem {
   }
 }
 
-function includesSearchText(skill: SkillSummary, search: string) {
-  const normalized = search.trim().toLowerCase()
-  if (!normalized) return true
-  return [
-    skill.displayName,
-    skill.namespace,
-    skill.slug,
-    skill.summary,
-    skill.ownerUsername,
-    skill.secondaryDepartment,
-  ].some((value) => value?.toLowerCase().includes(normalized))
-}
-
 function SkillOptionContent({ item }: { item: SuiteSkillPickerItem }) {
   return (
     <>
@@ -111,9 +98,8 @@ export function SuiteSkillPicker({ selected, onChange, maxCount = 50, excludedSk
   const selectedIds = useMemo(() => new Set(selected.map((item) => item.skillId)), [selected])
   const excludedIds = useMemo(() => new Set(excludedSkillIds), [excludedSkillIds])
   const isFull = selected.length >= maxCount
-  const filteredSkills = (data?.pages.flatMap((page) => page.items) ?? [])
+  const eligibleSkills = (data?.pages.flatMap((page) => page.items) ?? [])
     .filter(isSelectableSuiteSkill)
-    .filter((skill) => includesSearchText(skill, query))
 
   useEffect(() => {
     const root = resultsRef.current
@@ -149,7 +135,7 @@ export function SuiteSkillPicker({ selected, onChange, maxCount = 50, excludedSk
       root.removeEventListener('scroll', checkScrollBoundary)
       observer?.disconnect()
     }
-  }, [fetchNextPage, filteredSkills.length, hasNextPage, isFetchingNextPage, open])
+  }, [eligibleSkills.length, fetchNextPage, hasNextPage, isFetchingNextPage, open])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -229,9 +215,9 @@ export function SuiteSkillPicker({ selected, onChange, maxCount = 50, excludedSk
             <div ref={resultsRef} className="max-h-72 overflow-y-auto p-1">
               {!namespace ? (
                 <div className="px-3 py-4 text-sm text-muted-foreground">{t('suites.selectNamespaceBeforeSkills')}</div>
-              ) : isFetching && filteredSkills.length === 0 ? (
+              ) : isFetching && eligibleSkills.length === 0 ? (
                 <div className="px-3 py-4 text-sm text-muted-foreground">{t('suites.searching')}</div>
-              ) : filteredSkills.length > 0 ? filteredSkills.map((skill) => {
+              ) : eligibleSkills.length > 0 ? eligibleSkills.map((skill) => {
                 const isSelected = selectedIds.has(skill.id)
                 const isExcluded = excludedIds.has(skill.id)
                 const disabled = isExcluded || (isFull && !isSelected)
