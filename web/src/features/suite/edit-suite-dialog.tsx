@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '@/api/client'
 import type { SuiteDetail, SuiteUpdateRequest } from '@/api/types'
@@ -8,19 +8,8 @@ import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { Textarea } from '@/shared/ui/textarea'
 import { toast } from '@/shared/lib/toast'
-import { useAuth } from '@/features/auth/use-auth'
-import { useVisibleLabels } from '@/shared/hooks/use-label-queries'
-import { SuiteLabelPicker } from './suite-label-picker'
 import { useUpdateSuite } from './use-suite-queries'
 import { SUITE_DIALOG_ANIMATION_CLASS_NAME, useAnimatedDialogPresence } from './use-animated-dialog-presence'
-
-const MAX_LABELS = 10
-
-function haveSameLabelSlugs(left: string[], right: string[]) {
-  if (left.length !== right.length) return false
-  const rightSlugs = new Set(right)
-  return left.every((slug) => rightSlugs.has(slug))
-}
 
 interface EditSuiteDialogProps {
   suite: SuiteDetail
@@ -33,24 +22,12 @@ interface EditSuiteDialogProps {
 export function EditSuiteDialog({ suite, namespace, slug, open, onOpenChange }: EditSuiteDialogProps) {
   const { t } = useTranslation()
   const [summary, setSummary] = useState(suite.summary ?? '')
-  const [selectedLabelSlugs, setSelectedLabelSlugs] = useState(() => suite.labels.map((label) => label.slug))
   const { isMounted, isVisible } = useAnimatedDialogPresence(open)
-  const { user } = useAuth()
-  const { data: visibleLabels } = useVisibleLabels(open)
   const updateMutation = useUpdateSuite()
-  const isSuperAdmin = user?.platformRoles?.includes('SUPER_ADMIN') === true
-  const selectableLabels = useMemo(() => {
-    const labelsBySlug = new Map(suite.labels.map((label) => [label.slug, label]))
-    for (const label of visibleLabels ?? []) {
-      if (isSuperAdmin || label.type !== 'PRIVILEGED') labelsBySlug.set(label.slug, label)
-    }
-    return [...labelsBySlug.values()]
-  }, [isSuperAdmin, suite.labels, visibleLabels])
 
   useEffect(() => {
     if (open) {
       setSummary(suite.summary ?? '')
-      setSelectedLabelSlugs(suite.labels.map((label) => label.slug))
     }
   }, [open, suite])
 
@@ -60,10 +37,6 @@ export function EditSuiteDialog({ suite, namespace, slug, open, onOpenChange }: 
 
     if (nextSummary !== (suite.summary ?? '')) {
       request.summary = nextSummary
-    }
-    const currentLabelSlugs = suite.labels.map((label) => label.slug)
-    if (!haveSameLabelSlugs(selectedLabelSlugs, currentLabelSlugs)) {
-      request.labelSlugs = selectedLabelSlugs
     }
     if (Object.keys(request).length === 0) {
       toast.error(t('suites.updateValidationError'))
@@ -86,6 +59,7 @@ export function EditSuiteDialog({ suite, namespace, slug, open, onOpenChange }: 
     <Dialog open={isMounted} onOpenChange={onOpenChange}>
       <DialogContent
         data-state={isVisible ? 'open' : 'closed'}
+        overlayClassName="bg-slate-950/25 backdrop-blur-none"
         className={`max-h-[calc(100vh-2rem)] w-[min(calc(100vw-2rem),44rem)] overflow-y-auto ${SUITE_DIALOG_ANIMATION_CLASS_NAME} ${isVisible ? '' : 'pointer-events-none'}`}
       >
         <DialogHeader>
@@ -108,16 +82,6 @@ export function EditSuiteDialog({ suite, namespace, slug, open, onOpenChange }: 
               rows={3}
               placeholder={t('suites.summaryPlaceholder')}
               className="bg-white"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>{t('suites.labelsLabel')}</Label>
-            <SuiteLabelPicker
-              labels={selectableLabels}
-              selectedSlugs={selectedLabelSlugs}
-              onChange={setSelectedLabelSlugs}
-              maxCount={MAX_LABELS}
             />
           </div>
         </div>

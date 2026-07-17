@@ -260,7 +260,7 @@
     "creating": "Creating...",
     "createSubmit": "Create Suite",
     "editSuite": "Edit suite",
-    "editSuiteDescription": "Edit the suite summary and labels.",
+    "editSuiteDescription": "Edit the suite summary. Manage labels from the label panel on the detail page.",
     "addSuiteSkills": "Add skills",
     "updateValidationError": "Change at least one field before submitting",
     "updateErrorTitle": "Failed to update suite",
@@ -287,6 +287,14 @@
     "archivedBanner": "This suite has been archived and won't appear in listings for regular users.",
     "hiddenBanner": "This suite has been hidden by a platform administrator.",
     "ownedBy": "Created by {{owner}}",
+    "interactionUnavailable": "This suite cannot be starred or rated right now.",
+    "download": "Download",
+    "downloadErrorTitle": "Failed to download suite",
+    "share": {
+      "button": "Share",
+      "copied": "Copied",
+      "defaultDescription": "A useful expert suite"
+    },
     "detail": {
       "tabs": {
         "overview": "Overview",
@@ -335,11 +343,17 @@
     "unhideErrorTitle": "Failed to unhide suite",
     "tags": {
       "title": "Label Management",
-      "description": "View, attach, or remove suite labels.",
+      "description": "Attach or remove recommended labels that help users filter and discover this suite.",
+      "descriptionSuperAdmin": "Manage all labels on this suite, including privileged labels that stay hidden from public filters.",
+      "currentTitle": "Current labels",
+      "availableTitle": "Available labels",
       "add": "Attach Label",
+      "addLabel": "Add {{label}}",
+      "removeLabel": "Remove",
+      "restrictedHint": "Super admin only",
       "addDescription": "Select or deselect labels to update the labels attached to this suite.",
-      "loading": "Loading labels...",
-      "empty": "No labels yet",
+      "loading": "Loading available labels...",
+      "empty": "No labels are attached to this suite yet.",
       "delete": "Remove label",
       "createSuccess": "Label attached",
       "createError": "Failed to attach label",
@@ -353,7 +367,14 @@
       "reservedError": "This tag name is reserved and cannot be used",
       "duplicateError": "This label already exists",
       "selectRequired": "Please select at least one label",
-      "noAvailable": "No labels available to attach"
+      "noAvailable": "No more labels can be attached right now.",
+      "attachSuccessTitle": "Label attached",
+      "attachSuccessDescription": "The suite labels were updated.",
+      "attachErrorTitle": "Failed to attach label",
+      "detachSuccessTitle": "Label removed",
+      "detachSuccessDescription": "The suite labels were updated.",
+      "detachErrorTitle": "Failed to remove label",
+      "actionFallbackError": "The label action could not be completed."
     }
   },
   "myAssets": {

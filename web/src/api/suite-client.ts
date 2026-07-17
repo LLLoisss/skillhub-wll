@@ -58,6 +58,14 @@ function buildSuiteSkillsBatchUrl(namespace: string, slug: string, skillIds: num
   return `${WEB_API_PREFIX}/suites/${cleanNamespace(namespace)}/${encodeURIComponent(slug)}/skills/batch?${query.toString()}`
 }
 
+/**
+ * Temporary suite bundle download endpoint. Keep this builder isolated so the path can be
+ * replaced once the backend contract is confirmed.
+ */
+export function buildSuiteDownloadPath(namespace: string, slug: string): string {
+  return `${WEB_API_PREFIX}/suites/${cleanNamespace(namespace)}/${encodeURIComponent(slug)}/download`
+}
+
 const httpSuiteApi = {
   async search(params: SuiteSearchParams): Promise<PagedResponse<SuiteSummary>> {
     return fetchJson<PagedResponse<SuiteSummary>>(buildSuiteSearchUrl(params))

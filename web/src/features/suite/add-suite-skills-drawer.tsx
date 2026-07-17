@@ -17,7 +17,7 @@ const SEARCH_PAGE_SIZE = 20
 export const ADD_SUITE_SKILLS_DRAWER_TRANSITION_MS = 520
 
 export const ADD_SUITE_SKILLS_DRAWER_CLASS_NAME =
-  'suite-drawer-motion left-auto right-0 top-0 flex h-screen max-h-screen supports-[height:100dvh]:h-dvh supports-[height:100dvh]:max-h-[100dvh] w-[min(100vw,28rem)] max-w-none flex-col gap-0 overflow-hidden rounded-none border-y-0 border-r-0 p-0 shadow-2xl'
+  'suite-drawer-motion left-auto right-0 top-0 flex h-screen max-h-screen supports-[height:100dvh]:h-dvh supports-[height:100dvh]:max-h-[100dvh] w-[min(100vw,48rem)] max-w-none flex-col gap-0 overflow-hidden rounded-none border-y-0 border-r-0 p-0 shadow-2xl'
 
 interface AddSuiteSkillsDrawerProps {
   suite: SuiteDetail
@@ -174,6 +174,7 @@ export function AddSuiteSkillsDrawer({ suite, namespace, slug, open, onOpenChang
     <Dialog open={isMounted} onOpenChange={onOpenChange}>
       <DialogContent
         data-state={isVisible ? 'open' : 'closed'}
+        overlayClassName="bg-slate-950/25 backdrop-blur-none"
         className={`${ADD_SUITE_SKILLS_DRAWER_CLASS_NAME} ${isVisible ? '' : 'pointer-events-none'}`}
       >
         <DialogHeader className="shrink-0 border-b border-border/60 px-6 py-5 pr-12 text-left">
@@ -215,7 +216,7 @@ export function AddSuiteSkillsDrawer({ suite, namespace, slug, open, onOpenChang
                       onClick={() => toggleSkill(skill.id)}
                       className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
                         isExisting
-                          ? 'cursor-not-allowed bg-muted/60 text-muted-foreground opacity-70'
+                          ? 'cursor-not-allowed text-muted-foreground'
                           : disabled
                             ? 'cursor-not-allowed bg-secondary/20 text-muted-foreground'
                             : 'cursor-pointer hover:bg-secondary/40'

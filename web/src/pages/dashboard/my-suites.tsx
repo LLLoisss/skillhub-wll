@@ -30,7 +30,10 @@ export function MySuitesPage() {
               <div key={suite.id} className="h-full">
                 <SuiteCard
                   suite={suite}
-                  onClick={() => navigate({ to: `/suites/${suite.namespace}/${encodeURIComponent(suite.slug)}` })}
+                  onClick={() => navigate({
+                    to: `/suites/${suite.namespace}/${encodeURIComponent(suite.slug)}`,
+                    search: { returnTo: '/dashboard/suites' },
+                  })}
                 />
               </div>
             ))}

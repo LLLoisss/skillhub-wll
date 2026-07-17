@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { SuiteSummary } from '@/api/types'
 import { useAuth } from '@/features/auth/use-auth'
@@ -14,7 +14,7 @@ import { useVisibleLabels } from '@/shared/hooks/use-label-queries'
 import { Button } from '@/shared/ui/button'
 import { APP_SHELL_PAGE_CLASS_NAME } from '@/app/page-shell-style'
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 8
 
 function filterStarredSuites(suites: SuiteSummary[], query: string, labels: string[]) {
   const normalizedQuery = query.trim().toLowerCase()
@@ -44,6 +44,7 @@ function sortStarredSuites(suites: SuiteSummary[], sort: string) {
 export function SuiteSearchPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useRouterState({ select: (state) => state.location })
   const searchParams = useSearch({ strict: false }) as { q?: string; label?: string | string[]; sort?: string; page?: number; starredOnly?: boolean }
   const { isAuthenticated } = useAuth()
 
@@ -115,7 +116,10 @@ export function SuiteSearchPage() {
   }
 
   const handleSuiteClick = (namespace: string, slug: string) => {
-    navigate({ to: `/suites/${namespace}/${encodeURIComponent(slug)}` })
+    navigate({
+      to: `/suites/${namespace}/${encodeURIComponent(slug)}`,
+      search: { returnTo: `${location.pathname}${location.searchStr}${location.hash}` },
+    })
   }
 
   return (
@@ -128,9 +132,9 @@ export function SuiteSearchPage() {
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-muted-foreground">{t('search.sort.label')}</span>
           <div className="flex gap-2">
-            <Button variant={sort === 'relevance' ? 'default' : 'outline'} size="sm" onClick={() => handleSortChange('relevance')}>
+            {/* <Button variant={sort === 'relevance' ? 'default' : 'outline'} size="sm" onClick={() => handleSortChange('relevance')}>
               {t('suites.sort.relevance')}
-            </Button>
+            </Button> */}
             <Button variant={sort === 'stars' ? 'default' : 'outline'} size="sm" onClick={() => handleSortChange('stars')}>
               {t('suites.sort.stars')}
             </Button>

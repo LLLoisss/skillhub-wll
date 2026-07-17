@@ -17,7 +17,7 @@ export function SuiteRatingInput({ value, disabled = false, onChange }: SuiteRat
         <button
           key={rating}
           type="button"
-          className="p-0.5 transition-transform hover:scale-110"
+          className="p-1 hover:scale-110 transition-transform"
           onMouseEnter={() => setHoveredRating(rating)}
           onMouseLeave={() => setHoveredRating(null)}
           onClick={() => onChange(rating)}
@@ -25,7 +25,7 @@ export function SuiteRatingInput({ value, disabled = false, onChange }: SuiteRat
           aria-label={`${rating} stars`}
           aria-pressed={rating <= value}
         >
-          <Star className={`h-5 w-5 ${rating <= displayedRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+          <Star className={`w-5 h-5 ${rating <= displayedRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
         </button>
       ))}
     </>

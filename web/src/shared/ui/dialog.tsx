@@ -104,12 +104,16 @@ const DialogOverlay = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTML
 )
 DialogOverlay.displayName = 'DialogOverlay'
 
-const DialogContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, children, ...props }, ref) => {
+interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  overlayClassName?: string
+}
+
+const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
+  ({ className, overlayClassName, children, ...props }, ref) => {
     const { onOpenChange } = useDialog()
     return (
       <DialogPortal>
-        <DialogOverlay />
+        <DialogOverlay className={overlayClassName} />
         <div
           ref={ref}
           className={cn(

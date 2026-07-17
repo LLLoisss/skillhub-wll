@@ -27,7 +27,7 @@ export function SuiteCard({ suite, onClick }: SuiteCardProps) {
 
   return (
     <Card
-      className="h-full p-5 cursor-pointer group relative overflow-hidden bg-gradient-to-r from-primary/[0.11] via-primary/[0.07] to-primary/[0.04] border shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2"
+      className="h-full p-5 cursor-pointer group relative overflow-hidden bg-white border shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2"
       style={{ borderColor: 'hsl(var(--border-card))' }}
       onClick={onClick}
       onKeyDown={(event) => {
@@ -100,7 +100,7 @@ export function SuiteCard({ suite, onClick }: SuiteCardProps) {
         {previewSkills.length > 0 ? (
           <div className={`grid gap-2 pt-1 ${previewGridClassName}`}>
             {previewSkills.map((skill) => (
-              <div key={skill.skillId} className="min-w-0 rounded-[2px] bg-white px-2.5 py-2">
+              <div key={skill.skillId} className="min-w-0 rounded-[2px] bg-secondary/60 px-2.5 py-2">
                 <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 overflow-hidden">
                   <span className="truncate text-xs font-medium text-foreground" title={skill.displayName}>
                     {skill.displayName}
@@ -120,7 +120,7 @@ export function SuiteCard({ suite, onClick }: SuiteCardProps) {
           </div>
         ) : suite.skillCount === 0 ? (
           <div className="pt-1">
-            <div className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-[2px] bg-white px-3 py-3 text-muted-foreground">
+            <div className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-[2px] bg-secondary/60 px-3 py-3 text-muted-foreground">
               <Plus className="h-5 w-5" aria-hidden="true" />
               <span className="text-xs">{t('suites.emptySkillCardAction')}</span>
             </div>

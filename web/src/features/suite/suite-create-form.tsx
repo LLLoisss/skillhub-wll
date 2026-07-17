@@ -143,7 +143,10 @@ export function SuiteCreateForm({ actionsClassName, cancelAction, fullWidthSubmi
       resetForm()
       onCreated?.()
       toast.success(t('suites.createSuccessTitle'), t('suites.createSuccessDescription', { suite: result.displayName }))
-      navigate({ to: `/suites/${result.namespace}/${encodeURIComponent(result.slug)}` })
+      navigate({
+        to: `/suites/${result.namespace}/${encodeURIComponent(result.slug)}`,
+        search: { returnTo: '/dashboard/publish?tab=suite' },
+      })
     } catch (error) {
       toast.error(
         t('suites.createErrorTitle'),
@@ -327,5 +330,4 @@ export function SuiteCreateForm({ actionsClassName, cancelAction, fullWidthSubmi
     </div>
   )
 }
-
 

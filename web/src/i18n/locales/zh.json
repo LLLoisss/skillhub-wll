@@ -201,7 +201,7 @@
     "searchPlaceholder": "搜索专家套件...",
     "sort": {
       "relevance": "相关性",
-      "stars": "收藏数",
+      "stars": "收藏量",
       "rating": "评分",
       "newest": "最新"
     },
@@ -260,7 +260,7 @@
     "creating": "创建中...",
     "createSubmit": "创建套件",
     "editSuite": "编辑套件",
-    "editSuiteDescription": "编辑套件的简要描述和标签。",
+    "editSuiteDescription": "编辑套件的简要描述；标签请在详情页的标签管理中维护。",
     "addSuiteSkills": "添加技能",
     "updateValidationError": "请至少修改一项内容后再提交",
     "updateErrorTitle": "更新套件失败",
@@ -287,6 +287,14 @@
     "archivedBanner": "该套件已归档，普通用户无法在列表中看到它。",
     "hiddenBanner": "该套件已被平台管理员隐藏。",
     "ownedBy": "由 {{owner}} 创建",
+    "interactionUnavailable": "当前套件暂不可收藏或评分。",
+    "download": "下载",
+    "downloadErrorTitle": "下载套件失败",
+    "share": {
+      "button": "分享",
+      "copied": "已复制",
+      "defaultDescription": "实用专家套件"
+    },
     "detail": {
       "tabs": {
         "overview": "概览",
@@ -335,11 +343,17 @@
     "unhideErrorTitle": "取消隐藏套件失败",
     "tags": {
       "title": "标签管理",
-      "description": "查看、绑定或移除套件标签。",
+      "description": "为这个套件挂载或移除推荐标签，帮助用户筛选和发现。",
+      "descriptionSuperAdmin": "管理这个套件上的全部标签，包括不会出现在公开筛选里的特权标签。",
+      "currentTitle": "当前标签",
+      "availableTitle": "可添加标签",
       "add": "绑定标签",
+      "addLabel": "添加 {{label}}",
+      "removeLabel": "移除",
+      "restrictedHint": "仅超级管理员",
       "addDescription": "选择或取消选择标签，更新该套件绑定的标签。",
-      "loading": "正在加载标签...",
-      "empty": "暂无标签",
+      "loading": "正在加载可用标签...",
+      "empty": "当前套件还没有挂载任何标签。",
       "delete": "移除标签",
       "createSuccess": "标签已绑定",
       "createError": "绑定标签失败",
@@ -353,7 +367,14 @@
       "reservedError": "该标签名称为保留名称，不能使用",
       "duplicateError": "该标签已存在",
       "selectRequired": "请至少选择一个标签",
-      "noAvailable": "暂无可绑定标签"
+      "noAvailable": "当前没有可继续添加的标签。",
+      "attachSuccessTitle": "标签已添加",
+      "attachSuccessDescription": "套件标签已更新。",
+      "attachErrorTitle": "添加标签失败",
+      "detachSuccessTitle": "标签已移除",
+      "detachSuccessDescription": "套件标签已更新。",
+      "detachErrorTitle": "移除标签失败",
+      "actionFallbackError": "标签操作未能完成。"
     }
   },
   "myAssets": {
