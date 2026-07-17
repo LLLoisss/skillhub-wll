@@ -285,7 +285,7 @@
     "removeSkillErrorTitle": "移除技能失败",
     "backToSuites": "返回专家套件",
     "archivedBanner": "该套件已归档，普通用户无法在列表中看到它。",
-    "hiddenBanner": "该套件已被平台管理员隐藏。",
+    "hiddenBanner": "该套件已被隐藏。",
     "ownedBy": "由 {{owner}} 创建",
     "interactionUnavailable": "当前套件暂不可收藏或评分。",
     "download": "下载",

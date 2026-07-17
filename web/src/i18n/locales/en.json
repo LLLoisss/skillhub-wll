@@ -285,7 +285,7 @@
     "removeSkillErrorTitle": "Failed to remove skill",
     "backToSuites": "Back to Expert Suites",
     "archivedBanner": "This suite has been archived and won't appear in listings for regular users.",
-    "hiddenBanner": "This suite has been hidden by a platform administrator.",
+    "hiddenBanner": "This suite has been hidden.",
     "ownedBy": "Created by {{owner}}",
     "interactionUnavailable": "This suite cannot be starred or rated right now.",
     "download": "Download",
