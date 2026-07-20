@@ -178,6 +178,7 @@ class ReviewPortalControllerTest {
                                 "ACTIVE",
                                 8L,
                                 2,
+                                false,
                                 null,
                                 0,
                                 false,

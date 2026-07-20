@@ -2,6 +2,8 @@ package com.iflytek.skillhub.controller.portal;
 
 import com.iflytek.skillhub.controller.BaseApiController;
 import com.iflytek.skillhub.domain.namespace.NamespaceRole;
+import com.iflytek.skillhub.domain.social.SkillStar;
+import com.iflytek.skillhub.domain.social.SkillStarRepository;
 import com.iflytek.skillhub.domain.skill.SkillFile;
 import com.iflytek.skillhub.domain.skill.SkillVersion;
 import com.iflytek.skillhub.domain.skill.service.SkillDownloadService;
@@ -20,6 +22,7 @@ import com.iflytek.skillhub.dto.SkillVersionResponse;
 import com.iflytek.skillhub.metrics.SkillHubMetrics;
 import com.iflytek.skillhub.ratelimit.RateLimit;
 import com.iflytek.skillhub.service.SkillLabelAppService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +30,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -34,6 +38,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -47,18 +52,21 @@ public class SkillController extends BaseApiController {
     private final SkillQueryService skillQueryService;
     private final SkillDownloadService skillDownloadService;
     private final SkillLabelAppService skillLabelAppService;
+    private final SkillStarRepository skillStarRepository;
     private final SkillHubMetrics metrics;
 
     public SkillController(
             SkillQueryService skillQueryService,
             SkillDownloadService skillDownloadService,
             SkillLabelAppService skillLabelAppService,
+            SkillStarRepository skillStarRepository,
             SkillHubMetrics metrics,
             ApiResponseFactory responseFactory) {
         super(responseFactory);
         this.skillQueryService = skillQueryService;
         this.skillDownloadService = skillDownloadService;
         this.skillLabelAppService = skillLabelAppService;
+        this.skillStarRepository = skillStarRepository;
         this.metrics = metrics;
     }
 
@@ -87,6 +95,7 @@ public class SkillController extends BaseApiController {
                 detail.status(),
                 detail.downloadCount(),
                 detail.starCount(),
+                findStarredSkillIds(userId, List.of(detail.id())).contains(detail.id()),
                 detail.ratingAvg(),
                 detail.ratingCount(),
                 detail.hidden(),
@@ -123,6 +132,8 @@ public class SkillController extends BaseApiController {
 
         List<SkillQueryService.SkillDetailWithNamespace> details = skillQueryService.batchGetSkillDetails(
                 lookupKeys, userId, userNsRoles != null ? userNsRoles : Map.of());
+        List<Long> skillIds = details.stream().map(entry -> entry.detail().id()).distinct().toList();
+        Set<Long> starredSkillIds = findStarredSkillIds(userId, skillIds);
 
         List<SkillDetailResponse> responses = details.stream()
                 .map(entry -> new SkillDetailResponse(
@@ -136,6 +147,7 @@ public class SkillController extends BaseApiController {
                         entry.detail().status(),
                         entry.detail().downloadCount(),
                         entry.detail().starCount(),
+                        starredSkillIds.contains(entry.detail().id()),
                         entry.detail().ratingAvg(),
                         entry.detail().ratingCount(),
                         entry.detail().hidden(),
@@ -154,6 +166,15 @@ public class SkillController extends BaseApiController {
                 .collect(java.util.stream.Collectors.toList());
 
         return ok("response.success.read", responses);
+    }
+
+    private Set<Long> findStarredSkillIds(String userId, List<Long> skillIds) {
+        if (StringUtils.isBlank(userId) || CollectionUtils.isEmpty(skillIds)) {
+            return Set.of();
+        }
+        return skillStarRepository.findByUserIdAndSkillIdIn(userId, skillIds).stream()
+                .map(SkillStar::getSkillId)
+                .collect(Collectors.toSet());
     }
 
     /**

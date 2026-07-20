@@ -1,8 +1,11 @@
 package com.iflytek.skillhub.controller;
 
+import com.iflytek.skillhub.auth.rbac.PlatformPrincipal;
 import com.iflytek.skillhub.domain.namespace.NamespaceMemberRepository;
 import com.iflytek.skillhub.domain.namespace.NamespaceRole;
 import com.iflytek.skillhub.domain.shared.exception.DomainForbiddenException;
+import com.iflytek.skillhub.domain.social.SkillStar;
+import com.iflytek.skillhub.domain.social.SkillStarRepository;
 import com.iflytek.skillhub.domain.skill.SkillFile;
 import com.iflytek.skillhub.domain.skill.SkillVersion;
 import com.iflytek.skillhub.domain.skill.service.SkillDownloadService;
@@ -15,18 +18,27 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.http.MediaType;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -47,6 +59,9 @@ class SkillControllerTest {
 
     @MockBean
     private SkillLabelAppService skillLabelAppService;
+
+    @MockBean
+    private SkillStarRepository skillStarRepository;
 
     @Test
     void getVersionDetailShouldReturnMetadataFields() throws Exception {
@@ -204,6 +219,56 @@ class SkillControllerTest {
     }
 
     @Test
+    void batchGetSkillDetailsShouldReturnFalseStarsForUnauthenticatedUser() throws Exception {
+        when(skillQueryService.batchGetSkillDetails(any(), eq((String) null), eq(Map.<Long, NamespaceRole>of())))
+                .thenReturn(List.of(
+                        new SkillQueryService.SkillDetailWithNamespace("team", skillDetail(1L, "one")),
+                        new SkillQueryService.SkillDetailWithNamespace("team", skillDetail(2L, "two"))
+                ));
+
+        mockMvc.perform(post("/api/v1/skills/batch")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"skillList":[
+                                  {"namespace":"team","slug":"one"},
+                                  {"namespace":"team","slug":"two"}
+                                ]}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].star").value(false))
+                .andExpect(jsonPath("$.data[1].star").value(false));
+
+        verifyNoInteractions(skillStarRepository);
+    }
+
+    @Test
+    void batchGetSkillDetailsShouldReturnViewerStarState() throws Exception {
+        when(namespaceMemberRepository.findByUserId("user-1")).thenReturn(List.of());
+        when(skillQueryService.batchGetSkillDetails(any(), eq("user-1"), eq(Map.<Long, NamespaceRole>of())))
+                .thenReturn(List.of(
+                        new SkillQueryService.SkillDetailWithNamespace("team", skillDetail(1L, "one")),
+                        new SkillQueryService.SkillDetailWithNamespace("team", skillDetail(2L, "two"))
+                ));
+        when(skillStarRepository.findByUserIdAndSkillIdIn("user-1", List.of(1L, 2L)))
+                .thenReturn(List.of(new SkillStar(2L, "user-1")));
+
+        mockMvc.perform(post("/api/v1/skills/batch")
+                        .with(auth("user-1"))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"skillList":[
+                                  {"namespace":"team","slug":"one"},
+                                  {"namespace":"team","slug":"two"}
+                                ]}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].star").value(false))
+                .andExpect(jsonPath("$.data[1].star").value(true));
+    }
+
+    @Test
     void listFilesByTagShouldReturnUnifiedEnvelope() throws Exception {
         when(skillQueryService.listFilesByTag(
                 eq("team"),
@@ -236,5 +301,52 @@ class SkillControllerTest {
         mockMvc.perform(get("/api/v1/skills/team/demo/versions"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.items[0].downloadAvailable").value(false));
+    }
+
+    private SkillQueryService.SkillDetailDTO skillDetail(Long id, String slug) {
+        return new SkillQueryService.SkillDetailDTO(
+                id,
+                slug,
+                slug,
+                "owner-1",
+                "Owner",
+                "Summary",
+                "PUBLIC",
+                "ACTIVE",
+                0L,
+                0,
+                null,
+                0,
+                false,
+                10L,
+                Instant.parse("2026-03-15T10:00:00Z"),
+                Instant.parse("2026-03-15T10:00:00Z"),
+                false,
+                false,
+                true,
+                true,
+                null,
+                null,
+                null,
+                null,
+                "PUBLISHED"
+        );
+    }
+
+    private RequestPostProcessor auth(String userId) {
+        PlatformPrincipal principal = new PlatformPrincipal(
+                userId,
+                userId,
+                userId + "@example.com",
+                "",
+                "session",
+                Set.of()
+        );
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+        return authentication(authenticationToken);
     }
 }

@@ -67,6 +67,7 @@ public class ReviewSkillDetailAppService {
                 snapshot.skill().getStatus().name(),
                 snapshot.skill().getDownloadCount(),
                 snapshot.skill().getStarCount(),
+                false,
                 snapshot.skill().getRatingAvg(),
                 snapshot.skill().getRatingCount(),
                 snapshot.skill().isHidden(),
