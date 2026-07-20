@@ -277,6 +277,7 @@ const suitesRoute = createRoute({
 const suiteDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/suites/$namespace/$slug',
+  beforeLoad: requireAuth,
   validateSearch: (search: Record<string, unknown>): { returnTo?: string } => ({
     returnTo: typeof search.returnTo === 'string' && search.returnTo.startsWith('/') ? search.returnTo : undefined,
   }),

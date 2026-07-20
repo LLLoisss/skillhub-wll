@@ -138,6 +138,11 @@ export function SuiteDetailPage() {
   return (
     <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 animate-fade-up">
       <div className="flex-1 min-w-0 space-y-8">
+        {suite.skills.length === 0 && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            {t('suites.emptySuiteBanner')}
+          </div>
+        )}
         {suite.status === 'ARCHIVED' && (
           <div className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700">
             {t('suites.archivedBanner')}

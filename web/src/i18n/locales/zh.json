@@ -284,6 +284,7 @@
     "removeSkillSuccessTitle": "技能已移除",
     "removeSkillErrorTitle": "移除技能失败",
     "backToSuites": "返回专家套件",
+    "emptySuiteBanner": "当前套件不包含任何技能，首页不展示该套件。",
     "archivedBanner": "该套件已归档，普通用户无法在列表中看到它。",
     "hiddenBanner": "该套件已被隐藏。",
     "ownedBy": "由 {{owner}} 创建",

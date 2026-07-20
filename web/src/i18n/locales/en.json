@@ -284,6 +284,7 @@
     "removeSkillSuccessTitle": "Skill removed",
     "removeSkillErrorTitle": "Failed to remove skill",
     "backToSuites": "Back to Expert Suites",
+    "emptySuiteBanner": "This suite does not contain any skills and has been hidden from the home page.",
     "archivedBanner": "This suite has been archived and won't appear in listings for regular users.",
     "hiddenBanner": "This suite has been hidden.",
     "ownedBy": "Created by {{owner}}",

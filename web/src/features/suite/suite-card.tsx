@@ -105,9 +105,9 @@ export function SuiteCard({ suite, onClick }: SuiteCardProps) {
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground">
+        {/* <p className="text-xs text-muted-foreground">
           {suite.publisherName ?? '—'}({suite.ownerUsername ?? '—'})&nbsp;·&nbsp;{suite.secondaryDepartment || '其他部门'}
-        </p>
+        </p> */}
 
         {/* Middle: suite description. */}
         {suite.summary && <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{suite.summary}</p>}
