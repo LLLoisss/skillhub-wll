@@ -14,6 +14,7 @@ import { useVisibleLabels } from '@/shared/hooks/use-label-queries';
 import { useMyStars } from '@/shared/hooks/use-user-queries';
 import { normalizeSearchQuery } from '@/shared/lib/search-query';
 import { Button } from '@/shared/ui/button';
+import { HierarchicalLabelFilter } from '@/features/label/hierarchical-label-filter';
 import { APP_SHELL_PAGE_CLASS_NAME } from '@/app/page-shell-style';
 
 const PAGE_SIZE = 12;
@@ -217,10 +218,9 @@ export function SearchPage() {
   };
 
   const handleLabelToggle = (label: string) => {
-    const nextLabel = selectedLabel === label ? '' : label;
     navigate({
       to: '/skills',
-      search: { q, label: nextLabel, sort, page: 0, starredOnly },
+      search: { q, label, sort, page: 0, starredOnly },
     });
   };
 
@@ -341,28 +341,25 @@ export function SearchPage() {
           </div>
         ) : null}
 
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-muted-foreground">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="flex h-8 shrink-0 items-center text-sm font-medium text-muted-foreground">
             {t('search.filters.label')}
           </span>
-          <Button
-            variant={starredOnly ? 'default' : 'outline'}
-            size="sm"
-            onClick={handleStarredToggle}
-          >
-            {t('search.filterStarred')}
-          </Button>
-          {!starredOnly &&
-            labels?.map((label) => (
+          <HierarchicalLabelFilter
+            labels={starredOnly ? [] : (labels ?? [])}
+            selectedSlug={selectedLabel}
+            onSelect={handleLabelToggle}
+            leadingControl={(
               <Button
-                key={label.slug}
-                variant={selectedLabel === label.slug ? 'default' : 'outline'}
+                variant={starredOnly ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => handleLabelToggle(label.slug)}
+                className="shrink-0"
+                onClick={handleStarredToggle}
               >
-                {label.displayName}
+                {t('search.filterStarred')}
               </Button>
-            ))}
+            )}
+          />
         </div>
       </div>
 

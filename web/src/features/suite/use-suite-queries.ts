@@ -229,8 +229,13 @@ export function usePutSuiteLabels() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ namespace, slug, labelSlugs }: { namespace: string; slug: string; labelSlugs: string[] }) =>
-      Promise.all(labelSlugs.map((labelSlug) => suiteApi.putLabel(namespace, slug, labelSlug))),
+    mutationFn: async ({ namespace, slug, labelSlugs }: { namespace: string; slug: string; labelSlugs: string[] }) => {
+      const attachedLabels = []
+      for (const labelSlug of labelSlugs) {
+        attachedLabels.push(await suiteApi.putLabel(namespace, slug, labelSlug))
+      }
+      return attachedLabels
+    },
     onSuccess: (_data, variables) => Promise.all([
       queryClient.invalidateQueries({
         queryKey: getSuiteLabelsQueryKey(variables.namespace, variables.slug),

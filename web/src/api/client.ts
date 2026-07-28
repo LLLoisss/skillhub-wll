@@ -42,6 +42,7 @@ import type {
   AdminLabelInput,
   LabelDefinition,
   LabelItem,
+  MessageResponse,
   Department,
   UserProfileByEmail,
 } from './types'
@@ -235,7 +236,7 @@ export async function fetchJson<T>(input: RequestInfo | URL, init?: RequestWithT
     throw new ApiError('Invalid JSON response', response.status)
   }
 
-  if (!response.ok || json.code !== 0) {
+  if (!response.ok || (json.code !== 0 && json.code !== 200)) {
     throw new ApiError(json.msg || `HTTP ${response.status}`, response.status, json.msg, json.msg)
   }
 
@@ -577,9 +578,9 @@ export const labelApi = {
     })
   },
 
-  async detachSkillLabel(namespace: string, slug: string, labelSlug: string): Promise<void> {
+  async detachSkillLabel(namespace: string, slug: string, labelSlug: string): Promise<MessageResponse> {
     const cleanNamespace = normalizeNamespaceSlug(namespace)
-    await fetchJson<void>(`${WEB_API_PREFIX}/skills/${cleanNamespace}/${encodeURIComponent(slug)}/labels/${encodeURIComponent(labelSlug)}`, {
+    return fetchJson<MessageResponse>(`${WEB_API_PREFIX}/skills/${cleanNamespace}/${encodeURIComponent(slug)}/labels/${encodeURIComponent(labelSlug)}`, {
       method: 'DELETE',
       headers: await ensureCsrfHeaders(),
     })
@@ -600,6 +601,7 @@ export const labelApi = {
         type: request.type,
         visibleInFilter: request.visibleInFilter,
         sortOrder: request.sortOrder,
+        parentId: request.parentId ?? 0,
         translations: request.translations.map((translation) => ({
           locale: translation.locale.trim(),
           displayName: translation.displayName.trim(),
@@ -626,8 +628,8 @@ export const labelApi = {
     })
   },
 
-  async deleteAdminDefinition(slug: string): Promise<void> {
-    await fetchJson<void>(`/api/v1/admin/labels/${encodeURIComponent(slug)}`, {
+  async deleteAdminDefinition(slug: string): Promise<MessageResponse> {
+    return fetchJson<MessageResponse>(`/api/v1/admin/labels/${encodeURIComponent(slug)}`, {
       method: 'DELETE',
       headers: await ensureCsrfHeaders(),
     })

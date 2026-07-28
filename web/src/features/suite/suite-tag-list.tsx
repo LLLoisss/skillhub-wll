@@ -1,11 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import { Tag } from 'lucide-react'
-import type { LabelDefinition, LabelItem, LabelTranslation } from '@/api/types'
+import type { LabelItem } from '@/api/types'
+import { HierarchicalLabelManager } from '@/features/label/hierarchical-label-manager'
+import { definitionsToLabelItems } from '@/features/label/label-hierarchy'
 import { useAdminLabelDefinitions, useVisibleLabels } from '@/shared/hooks/use-label-queries'
-import { Button } from '@/shared/ui/button'
-import { Card } from '@/shared/ui/card'
 import { toast } from '@/shared/lib/toast'
-import { cn } from '@/shared/lib/utils'
 import { useDeleteSuiteLabel, usePutSuiteLabels, useSuiteLabels } from './use-suite-queries'
 
 interface SuiteTagListProps {
@@ -16,49 +14,6 @@ interface SuiteTagListProps {
   isSuperAdmin: boolean
 }
 
-function canManageLabelType(type: string, isSuperAdmin: boolean) {
-  return isSuperAdmin || type !== 'PRIVILEGED'
-}
-
-function resolveDisplayName(translations: LabelTranslation[], locale: string, fallbackSlug: string) {
-  const normalizedLocale = locale.toLowerCase()
-  const exact = translations.find((item) => item.locale.toLowerCase() === normalizedLocale)
-  if (exact?.displayName) {
-    return exact.displayName
-  }
-
-  const language = normalizedLocale.split('-')[0]
-  const languageMatch = translations.find((item) => item.locale.toLowerCase().split('-')[0] === language)
-  if (languageMatch?.displayName) {
-    return languageMatch.displayName
-  }
-
-  return translations[0]?.displayName || fallbackSlug
-}
-
-function toCandidateLabel(definition: LabelDefinition, locale: string): LabelItem & { sortOrder: number } {
-  return {
-    slug: definition.slug,
-    type: definition.type,
-    displayName: resolveDisplayName(definition.translations, locale, definition.slug),
-    sortOrder: definition.sortOrder,
-  }
-}
-
-function sortByPresentation(
-  left: { displayName: string; slug: string; sortOrder?: number },
-  right: { displayName: string; slug: string; sortOrder?: number },
-) {
-  const leftOrder = left.sortOrder ?? Number.MAX_SAFE_INTEGER
-  const rightOrder = right.sortOrder ?? Number.MAX_SAFE_INTEGER
-  if (leftOrder !== rightOrder) {
-    return leftOrder - rightOrder
-  }
-  return left.displayName.localeCompare(right.displayName, undefined, { sensitivity: 'base' })
-    || left.slug.localeCompare(right.slug, undefined, { sensitivity: 'base' })
-}
-
-/** Suite label management mirrors the skill detail label panel while keeping suite APIs intact. */
 export function SuiteTagList({
   namespace,
   slug,
@@ -74,142 +29,52 @@ export function SuiteTagList({
   const attachMutation = usePutSuiteLabels()
   const detachMutation = useDeleteSuiteLabel()
 
-  if (!canManage) {
-    return null
-  }
+  if (!canManage) return null
 
-  const currentLabels = (suiteLabels ?? initialLabels).slice().sort(sortByPresentation)
-  const currentLabelSlugs = new Set(currentLabels.map((label) => label.slug))
-  const candidateLabels = isSuperAdmin
-    ? (adminDefinitions ?? []).map((definition) => toCandidateLabel(definition, locale))
-    : (visibleLabels ?? []).map((label, index) => ({ ...label, sortOrder: index }))
-  const availableLabels = candidateLabels
-    .filter((label) => !currentLabelSlugs.has(label.slug))
-    .filter((label) => canManageLabelType(label.type, isSuperAdmin))
-    .sort(sortByPresentation)
-  const isCatalogLoading = isSuperAdmin ? adminDefinitionsLoading : visibleLabelsLoading
-  const isMutating = attachMutation.isPending || detachMutation.isPending
+  const catalogLabels = isSuperAdmin
+    ? definitionsToLabelItems(adminDefinitions ?? [], locale)
+    : (visibleLabels ?? [])
 
-  const handleAttach = (labelSlug: string) => {
+  const handleAttach = (labels: LabelItem[]) => {
     attachMutation.mutate(
-      { namespace, slug, labelSlugs: [labelSlug] },
+      { namespace, slug, labelSlugs: labels.map((label) => label.slug) },
       {
-        onSuccess: () => {
-          toast.success(t('suites.tags.attachSuccessTitle'), t('suites.tags.attachSuccessDescription'))
-        },
-        onError: (error) => {
-          toast.error(
-            t('suites.tags.attachErrorTitle'),
-            error instanceof Error ? error.message : t('suites.tags.actionFallbackError'),
-          )
-        },
+        onSuccess: () => toast.success(t('suites.tags.attachSuccessTitle'), t('suites.tags.attachSuccessDescription')),
+        onError: (error) => toast.error(
+          t('suites.tags.attachErrorTitle'),
+          error instanceof Error ? error.message : t('suites.tags.actionFallbackError'),
+        ),
       },
     )
   }
 
-  const handleDetach = (label: LabelItem) => {
-    detachMutation.mutate(
-      { namespace, slug, labelSlug: label.slug },
-      {
-        onSuccess: () => {
-          toast.success(t('suites.tags.detachSuccessTitle'), t('suites.tags.detachSuccessDescription'))
-        },
-        onError: (error) => {
-          toast.error(
-            t('suites.tags.detachErrorTitle'),
-            error instanceof Error ? error.message : t('suites.tags.actionFallbackError'),
-          )
-        },
-      },
-    )
+  const handleDetach = async (label: LabelItem) => {
+    try {
+      await detachMutation.mutateAsync({
+        namespace,
+        slug,
+        labelSlug: label.slug,
+      })
+      toast.success(t('suites.tags.detachSuccessTitle'), t('suites.tags.detachSuccessDescription'))
+    } catch (error) {
+      toast.error(
+        t('suites.tags.detachErrorTitle'),
+        error instanceof Error ? error.message : t('suites.tags.actionFallbackError'),
+      )
+    }
   }
 
   return (
-    <Card className="p-5 space-y-4">
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <Tag className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm font-semibold font-heading text-foreground">{t('suites.tags.title')}</span>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {isSuperAdmin ? t('suites.tags.descriptionSuperAdmin') : t('suites.tags.description')}
-        </p>
-      </div>
-
-      <div className="space-y-3">
-        <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('suites.tags.currentTitle')}</div>
-        {currentLabels.length > 0 ? (
-          <div className="space-y-2">
-            {currentLabels.map((label) => {
-              const removable = canManageLabelType(label.type, isSuperAdmin)
-              return (
-                <div
-                  key={label.slug}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-secondary/20 px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <div
-                      className={cn(
-                        'inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium',
-                        label.type === 'PRIVILEGED'
-                          ? 'border-amber-500/40 bg-amber-100 text-amber-900'
-                          : 'border-slate-300 bg-slate-100 text-slate-800',
-                      )}
-                    >
-                      {label.displayName}
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">{label.slug}</div>
-                  </div>
-                  {removable ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDetach(label)}
-                      disabled={isMutating}
-                    >
-                      {detachMutation.isPending ? t('suites.processing') : t('suites.tags.removeLabel')}
-                    </Button>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">{t('suites.tags.restrictedHint')}</span>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-border/70 px-3 py-4 text-sm text-muted-foreground">
-            {t('suites.tags.empty')}
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-3">
-        <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('suites.tags.availableTitle')}</div>
-        {isCatalogLoading ? (
-          <div className="rounded-xl border border-dashed border-border/70 px-3 py-4 text-sm text-muted-foreground">
-            {t('suites.tags.loading')}
-          </div>
-        ) : availableLabels.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {availableLabels.map((label) => (
-              <Button
-                key={label.slug}
-                variant="outline"
-                size="sm"
-                className="rounded-full"
-                onClick={() => handleAttach(label.slug)}
-                disabled={isMutating}
-              >
-                {attachMutation.isPending ? t('suites.processing') : t('suites.tags.addLabel', { label: label.displayName })}
-              </Button>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-border/70 px-3 py-4 text-sm text-muted-foreground">
-            {t('suites.tags.noAvailable')}
-          </div>
-        )}
-      </div>
-    </Card>
+    <HierarchicalLabelManager
+      title={t('suites.tags.title')}
+      description={isSuperAdmin ? t('suites.tags.descriptionSuperAdmin') : t('suites.tags.description')}
+      currentLabels={suiteLabels ?? initialLabels}
+      catalogLabels={catalogLabels}
+      isCatalogLoading={isSuperAdmin ? adminDefinitionsLoading : visibleLabelsLoading}
+      isMutating={attachMutation.isPending || detachMutation.isPending}
+      isSuperAdmin={isSuperAdmin}
+      onAttach={handleAttach}
+      onDetach={handleDetach}
+    />
   )
 }

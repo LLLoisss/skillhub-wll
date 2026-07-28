@@ -10,6 +10,7 @@ import type { FileTreeNode } from '@/features/skill/file-tree-builder'
 import { InstallCommand } from '@/features/skill/install-command'
 import { ShareButton } from '@/features/skill/share-button'
 import { SkillLabelPanel } from '@/features/skill/skill-label-panel'
+import { HierarchicalLabelDisplayWithLoading } from '@/features/label/hierarchical-label-display'
 import {
   getOverviewCollapseMaxHeight,
   OVERVIEW_COLLAPSE_DESKTOP_MAX_HEIGHT,
@@ -56,6 +57,7 @@ import {
   useSubmitForReview,
   useConfirmPublish,
 } from '@/shared/hooks/use-skill-queries'
+import { useSkillLabels } from '@/shared/hooks/use-label-queries'
 import { useSubmitPromotion } from '@/shared/hooks/use-user-queries'
 
 /**
@@ -136,6 +138,7 @@ export function SkillDetailPage() {
   const qslug = detailQueriesEnabled ? slug : ''
   const { data: skill, isLoading: isLoadingSkill, isFetching: isFetchingSkill, error: skillError } = useSkillDetail(qns, qslug, detailQueriesEnabled)
   const skillReady = detailQueriesEnabled && Boolean(skill) && !isLoadingSkill && !isFetchingSkill && !skillError
+  const { data: skillLabels, isLoading: isLoadingSkillLabels } = useSkillLabels(qns, qslug, skillReady)
   const { data: versions } = useSkillVersions(qns, qslug, skillReady)
   const headlineVersion = skill ? getHeadlineVersion(skill) : null
   const publishedVersion = skill ? getPublishedVersion(skill) : null
@@ -739,23 +742,10 @@ export function SkillDetailPage() {
           {skill.summary && (
             <p className="text-lg text-muted-foreground leading-relaxed">{skill.summary}</p>
           )}
-          {(skill.labels?.length ?? 0) > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {skill.labels!.map((label) => (
-                <span
-                  key={label.slug}
-                  className={cn(
-                    'inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium',
-                    label.type === 'PRIVILEGED'
-                      ? 'border-amber-500/40 bg-amber-100 text-amber-900'
-                      : 'border-slate-300 bg-slate-100 text-slate-800',
-                  )}
-                >
-                  {label.displayName}
-                </span>
-              ))}
-            </div>
-          )}
+          <HierarchicalLabelDisplayWithLoading
+            labels={skillLabels}
+            isLoading={isLoadingSkillLabels}
+          />
           {isPendingPreview && (
             <Card className="border-amber-500/30 bg-amber-500/5 p-4 text-sm text-muted-foreground">
               <div className="font-medium text-foreground">{t('skillDetail.pendingPreviewTitle')}</div>
@@ -1143,7 +1133,7 @@ export function SkillDetailPage() {
         <SkillLabelPanel
           namespace={namespace}
           slug={slug}
-          initialLabels={skill.labels ?? []}
+          initialLabels={skillLabels ?? []}
           canManage={canManageLabels}
           isSuperAdmin={hasRole('SUPER_ADMIN')}
         />

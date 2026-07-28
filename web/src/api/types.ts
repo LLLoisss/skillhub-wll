@@ -201,11 +201,16 @@ export interface SkillSummary {
   ownerDepartment?: string
 }
 
+export type LabelLevel = 1 | 2
+
 export type LabelItem = Omit<components['schemas']['SkillLabelDto'], 'slug' | 'type' | 'displayName'> & {
   id?: number
   slug: string
   type: 'RECOMMENDED' | 'PRIVILEGED' | string
   displayName: string
+  level?: LabelLevel
+  parentId?: number
+  children?: LabelItem[]
 }
 
 export type LabelTranslation = Omit<components['schemas']['LabelTranslationResponse'], 'locale' | 'displayName'> & {
@@ -217,11 +222,16 @@ export type LabelDefinition = Omit<
   components['schemas']['LabelDefinitionResponse'],
   'slug' | 'type' | 'translations' | 'sortOrder' | 'visibleInFilter'
 > & {
+  id?: number
   slug: string
   type: 'RECOMMENDED' | 'PRIVILEGED' | string
   visibleInFilter: boolean
   sortOrder: number
   translations: LabelTranslation[]
+  level?: LabelLevel
+  parentId?: number
+  childCount?: number
+  children?: LabelDefinition[]
 }
 
 export interface AdminLabelInput {
@@ -229,8 +239,11 @@ export interface AdminLabelInput {
   type: 'RECOMMENDED' | 'PRIVILEGED'
   visibleInFilter: boolean
   sortOrder: number
+  parentId?: number
   translations: LabelTranslation[]
 }
+
+export type MessageResponse = components['schemas']['MessageResponse']
 
 export interface SkillLifecycleVersion {
   id: number

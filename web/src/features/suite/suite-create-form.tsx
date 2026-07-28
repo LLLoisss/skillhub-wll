@@ -23,11 +23,15 @@ import { useMyActiveNamespaces } from '@/shared/hooks/use-namespace-queries'
 import { toast } from '@/shared/lib/toast'
 import type { Department } from '@/api/types'
 import { Check, ChevronDown } from 'lucide-react'
+import {
+  filterSelectableLabelHierarchy,
+  HierarchicalLabelMultiSelect,
+} from '@/features/label/hierarchical-label-multi-select'
+import { buildHierarchicalBindingSlugs } from '@/features/label/label-hierarchy'
 import { useCreateSuite } from './use-suite-queries'
 import { SuiteSkillPicker, type SuiteSkillPickerItem } from './suite-skill-picker'
-import { SuiteLabelPicker } from './suite-label-picker'
 
-const MAX_LABELS = 10
+const MAX_LABELS = 9
 const MAX_SKILLS = 50
 
 interface DeptOption {
@@ -66,6 +70,7 @@ export function SuiteCreateForm({ actionsClassName, cancelAction, fullWidthSubmi
   const [departmentSearch, setDepartmentSearch] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [summary, setSummary] = useState('')
+  const [selectedPrimaryLabelSlug, setSelectedPrimaryLabelSlug] = useState('')
   const [selectedLabelSlugs, setSelectedLabelSlugs] = useState<string[]>([])
   const [selectedSkills, setSelectedSkills] = useState<SuiteSkillPickerItem[]>([])
   const departmentRef = useRef<HTMLDivElement>(null)
@@ -76,8 +81,7 @@ export function SuiteCreateForm({ actionsClassName, cancelAction, fullWidthSubmi
   const { data: visibleLabels } = useVisibleLabels()
   const createMutation = useCreateSuite()
   const isSuperAdmin = user?.platformRoles?.includes('SUPER_ADMIN') === true
-  const selectableLabels = (visibleLabels ?? [])
-    .filter((label) => isSuperAdmin || label.type !== 'PRIVILEGED')
+  const selectableLabels = filterSelectableLabelHierarchy(visibleLabels ?? [], isSuperAdmin)
   const userDeptOptions = flattenDepts(userProfile?.departments ?? [])
   const allDeptOptions = flattenDepts(allDepartments ?? [])
   const userLabels = new Set(userDeptOptions.map((d) => d.label))
@@ -119,6 +123,7 @@ export function SuiteCreateForm({ actionsClassName, cancelAction, fullWidthSubmi
     setDepartmentSearch('')
     setDisplayName('')
     setSummary('')
+    setSelectedPrimaryLabelSlug('')
     setSelectedLabelSlugs([])
     setSelectedSkills([])
   }
@@ -126,6 +131,16 @@ export function SuiteCreateForm({ actionsClassName, cancelAction, fullWidthSubmi
   const handleSubmit = async () => {
     if (!isFormValid) {
       toast.error(t('suites.createValidationError'))
+      return
+    }
+
+    const bindingLabelSlugs = buildHierarchicalBindingSlugs(
+      selectableLabels,
+      selectedPrimaryLabelSlug,
+      selectedLabelSlugs,
+    )
+    if (selectedPrimaryLabelSlug && bindingLabelSlugs.length === 0) {
+      toast.error(t('publish.singlePrimaryLabelOnly'))
       return
     }
 
@@ -138,7 +153,7 @@ export function SuiteCreateForm({ actionsClassName, cancelAction, fullWidthSubmi
         displayName: displayName.trim(),
         summary: summary.trim() || undefined,
         skillIds: selectedSkills.map((item) => item.skillId),
-        labelSlugs: selectedLabelSlugs.length > 0 ? selectedLabelSlugs : undefined,
+        labelSlugs: bindingLabelSlugs.length > 0 ? bindingLabelSlugs : undefined,
       })
       resetForm()
       onCreated?.()
@@ -303,9 +318,12 @@ export function SuiteCreateForm({ actionsClassName, cancelAction, fullWidthSubmi
 
       <div className="space-y-2">
         <Label className="text-sm font-semibold font-heading">{t('suites.labelsLabel')}</Label>
-        <SuiteLabelPicker
+        <HierarchicalLabelMultiSelect
+          id="suiteLabels"
           labels={selectableLabels}
+          selectedPrimarySlug={selectedPrimaryLabelSlug}
           selectedSlugs={selectedLabelSlugs}
+          onPrimaryChange={setSelectedPrimaryLabelSlug}
           onChange={setSelectedLabelSlugs}
           maxCount={MAX_LABELS}
         />

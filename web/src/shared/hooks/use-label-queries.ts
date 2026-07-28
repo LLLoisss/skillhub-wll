@@ -20,7 +20,7 @@ async function attachSkillLabel(params: { namespace: string; slug: string; label
 }
 
 async function detachSkillLabel(params: { namespace: string; slug: string; labelSlug: string }): Promise<void> {
-  return labelApi.detachSkillLabel(params.namespace, params.slug, params.labelSlug)
+  await labelApi.detachSkillLabel(params.namespace, params.slug, params.labelSlug)
 }
 
 export function useVisibleLabels(enabled = true) {

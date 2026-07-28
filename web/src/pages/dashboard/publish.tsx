@@ -2,6 +2,11 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/use-auth'
+import {
+  filterSelectableLabelHierarchy,
+  HierarchicalLabelMultiSelect,
+} from '@/features/label/hierarchical-label-multi-select'
+import { buildHierarchicalBindingSlugs } from '@/features/label/label-hierarchy'
 import { UploadZone } from '@/features/publish/upload-zone'
 import { SuiteCreateForm } from '@/features/suite/suite-create-form'
 import {
@@ -32,8 +37,8 @@ import { ConfirmDialog } from '@/shared/components/confirm-dialog'
 import { DashboardPageHeader } from '@/shared/components/dashboard-page-header'
 import { toast } from '@/shared/lib/toast'
 import { ApiError } from '@/api/client'
-import type { Department, LabelItem } from '@/api/types'
-import { ChevronDown, Check, X } from 'lucide-react'
+import type { Department } from '@/api/types'
+import { ChevronDown, Check } from 'lucide-react'
 
 interface DeptOption {
   label: string
@@ -54,14 +59,9 @@ function flattenDepts(depts: Department[]): DeptOption[] {
 }
 
 const EMPTY_NAMESPACE_VALUE = '__select_namespace__'
-const MAX_SELECTED_LABELS = 10
+const MAX_SELECTED_LABELS = 9
 
 type PublishTab = 'skill' | 'suite'
-
-function sortLabels(left: LabelItem, right: LabelItem) {
-  return left.displayName.localeCompare(right.displayName, undefined, { sensitivity: 'base' })
-    || left.slug.localeCompare(right.slug, undefined, { sensitivity: 'base' })
-}
 
 export function PublishPage() {
   const { t } = useTranslation()
@@ -79,12 +79,9 @@ export function PublishPage() {
   const [precheckWarnings, setPrecheckWarnings] = useState<string[]>([])
   const [departmentOpen, setDepartmentOpen] = useState(false)
   const [departmentSearch, setDepartmentSearch] = useState('')
-  const [labelOpen, setLabelOpen] = useState(false)
-  const [labelSearch, setLabelSearch] = useState('')
+  const [selectedPrimaryLabelSlug, setSelectedPrimaryLabelSlug] = useState('')
   const [selectedLabelSlugs, setSelectedLabelSlugs] = useState<string[]>([])
   const departmentRef = useRef<HTMLDivElement>(null)
-  const labelRef = useRef<HTMLDivElement>(null)
-  const labelInputRef = useRef<HTMLInputElement>(null)
 
   const { data: namespaces, isLoading: isLoadingNamespaces } = useMyActiveNamespaces()
   const { data: allDepartments, isLoading: isLoadingAllDepartments } = useAllDepartments()
@@ -106,29 +103,13 @@ export function PublishPage() {
   const searchLower = departmentSearch.toLowerCase()
   const filteredUserOptions = userDeptOptions.filter((d) => d.label.toLowerCase().includes(searchLower))
   const filteredExtraOptions = extraDeptOptions.filter((d) => d.label.toLowerCase().includes(searchLower))
-  const labelSearchLower = labelSearch.toLowerCase()
-  const selectableLabels = (visibleLabels ?? [])
-    .filter((label) => isSuperAdmin || label.type !== 'PRIVILEGED')
-    .slice()
-    .sort(sortLabels)
-  const selectedLabels = selectedLabelSlugs
-    .map((slug) => selectableLabels.find((label) => label.slug === slug))
-    .filter((label): label is LabelItem => Boolean(label))
-  const filteredLabels = selectableLabels.filter((label) =>
-    label.displayName.toLowerCase().includes(labelSearchLower)
-    || label.slug.toLowerCase().includes(labelSearchLower)
-  )
-  const maxLabelsReached = selectedLabelSlugs.length >= MAX_SELECTED_LABELS
+  const selectableLabels = filterSelectableLabelHierarchy(visibleLabels ?? [], isSuperAdmin)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (departmentRef.current && !departmentRef.current.contains(event.target as Node)) {
         setDepartmentOpen(false)
         setDepartmentSearch('')
-      }
-      if (labelRef.current && !labelRef.current.contains(event.target as Node)) {
-        setLabelOpen(false)
-        setLabelSearch('')
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -151,25 +132,19 @@ export function PublishPage() {
     setWarningDialogOpen(false)
   }
 
-  const toggleLabel = (labelSlug: string) => {
-    if (selectedLabelSlugs.includes(labelSlug)) {
-      setSelectedLabelSlugs((current) => current.filter((slug) => slug !== labelSlug))
-      return
-    }
-    if (maxLabelsReached) {
-      toast.error(t('publish.maxLabelsReached'))
-      return
-    }
-    setSelectedLabelSlugs((current) => [...current, labelSlug])
-  }
-
-  const removeLabel = (labelSlug: string) => {
-    setSelectedLabelSlugs((current) => current.filter((slug) => slug !== labelSlug))
-  }
-
   const publishSkill = async (confirmWarnings = false) => {
-    if (!selectedFile || !namespaceSlug || !selectedDept || !publisherName || selectedLabelSlugs.length === 0) {
+    if (!selectedFile || !namespaceSlug || !selectedDept || !publisherName || !selectedPrimaryLabelSlug) {
       toast.error(t('publish.selectRequired'))
+      return
+    }
+
+    const bindingLabelSlugs = buildHierarchicalBindingSlugs(
+      selectableLabels,
+      selectedPrimaryLabelSlug,
+      selectedLabelSlugs,
+    )
+    if (bindingLabelSlugs.length === 0) {
+      toast.error(t('publish.singlePrimaryLabelOnly'))
       return
     }
 
@@ -182,7 +157,7 @@ export function PublishPage() {
         primaryDepartment: selectedDept?.primary,
         secondaryDepartment: selectedDept?.secondary,
         publisherName: publisherName || undefined,
-        labelSlugs: selectedLabelSlugs,
+        labelSlugs: bindingLabelSlugs,
       })
       setPrecheckWarnings([])
       setWarningDialogOpen(false)
@@ -410,91 +385,15 @@ export function PublishPage() {
           {isLoadingLabels ? (
             <div className="h-11 animate-shimmer rounded-lg" />
           ) : (
-            <div ref={labelRef} className="relative">
-              <div
-                className={[
-                  'flex min-h-11 w-full items-center gap-2 rounded-lg border bg-secondary/50 px-3 py-2 text-sm transition-all duration-200',
-                  labelOpen ? 'border-primary/50 ring-2 ring-primary/40 ring-offset-background' : 'border-input hover:border-primary/50',
-                ].join(' ')}
-                onClick={() => {
-                  setLabelOpen(true)
-                  labelInputRef.current?.focus()
-                }}
-              >
-                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                  {selectedLabels.map((label) => (
-                    <span
-                      key={label.slug}
-                      className="inline-flex max-w-full items-center gap-1 rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-foreground"
-                    >
-                      <span className="max-w-36 truncate">{label.displayName}</span>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          removeLabel(label.slug)
-                        }}
-                        className="rounded-full text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                        aria-label={t('publish.removeLabel', { label: label.displayName })}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </span>
-                  ))}
-                  <input
-                    ref={labelInputRef}
-                    id="labels"
-                    value={labelSearch}
-                    onChange={(e) => setLabelSearch(e.target.value)}
-                    onFocus={() => setLabelOpen(true)}
-                    placeholder={labelOpen ? t('publish.searchLabels') : selectedLabels.length === 0 ? t('publish.selectLabels') : ''}
-                    className="flex-1 min-w-0 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
-                  />
-                </div>
-                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </div>
-
-              {labelOpen && (
-                <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-md">
-                  <div className="max-h-60 overflow-y-auto p-1">
-                    {maxLabelsReached && (
-                      <div className="px-3 py-2 text-xs text-muted-foreground">
-                        {t('publish.maxLabelsReached')}
-                      </div>
-                    )}
-                    {filteredLabels.length > 0 ? filteredLabels.map((label) => {
-                      const selected = selectedLabelSlugs.includes(label.slug)
-                      const disabled = maxLabelsReached && !selected
-                      return (
-                        <button
-                          key={label.slug}
-                          type="button"
-                          onClick={() => toggleLabel(label.slug)}
-                          disabled={disabled}
-                          title={disabled ? t('publish.maxLabelsReached') : undefined}
-                          className={[
-                            'relative flex w-full select-none items-center rounded-md py-2 pl-8 pr-4 text-left text-sm outline-none',
-                            disabled
-                              ? 'cursor-not-allowed text-muted-foreground opacity-50'
-                              : 'cursor-pointer hover:bg-accent hover:text-accent-foreground',
-                          ].join(' ')}
-                        >
-                          {selected && <Check className="absolute left-2 h-4 w-4" />}
-                          <span className="flex min-w-0 items-center gap-2">
-                            <span className="truncate">{label.displayName}</span>
-                            <span className="shrink-0 truncate text-xs text-muted-foreground">(@{label.slug})</span>
-                          </span>
-                        </button>
-                      )
-                    }) : (
-                      <div className="px-3 py-4 text-sm text-muted-foreground">
-                        {t('publish.noLabelsFound')}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            <HierarchicalLabelMultiSelect
+              id="labels"
+              labels={selectableLabels}
+              selectedPrimarySlug={selectedPrimaryLabelSlug}
+              selectedSlugs={selectedLabelSlugs}
+              onPrimaryChange={setSelectedPrimaryLabelSlug}
+              onChange={setSelectedLabelSlugs}
+              maxCount={MAX_SELECTED_LABELS}
+            />
           )}
         </div>
 
@@ -546,7 +445,7 @@ export function PublishPage() {
           className="w-full text-primary-foreground disabled:text-primary-foreground"
           size="lg"
           onClick={handlePublish}
-          disabled={!selectedFile || !namespaceSlug || !selectedDept || !publisherName || selectedLabelSlugs.length === 0 || publishMutation.isPending}
+          disabled={!selectedFile || !namespaceSlug || !selectedDept || !publisherName || !selectedPrimaryLabelSlug || publishMutation.isPending}
         >
           {publishMutation.isPending ? t('publish.publishing') : t('publish.confirm')}
         </Button>

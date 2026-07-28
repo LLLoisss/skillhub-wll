@@ -1,6 +1,7 @@
 ﻿import type {
   CreateSuiteRequest,
   LabelItem,
+  MessageResponse,
   PagedResponse,
   SuiteCreateResult,
   SuiteDeleteResult,
@@ -158,8 +159,8 @@ const httpSuiteApi = {
     return fetchJson<LabelItem[]>(`${WEB_API_PREFIX}/suites/${cleanNamespace(namespace)}/${encodeURIComponent(slug)}/labels`, { signal })
   },
 
-  async putLabel(namespace: string, slug: string, labelSlug: string): Promise<void> {
-    await fetchJson<void>(
+  async putLabel(namespace: string, slug: string, labelSlug: string): Promise<LabelItem> {
+    return fetchJson<LabelItem>(
       `${WEB_API_PREFIX}/suites/${cleanNamespace(namespace)}/${encodeURIComponent(slug)}/labels/${encodeURIComponent(labelSlug)}`,
       {
         method: 'PUT',
@@ -168,8 +169,8 @@ const httpSuiteApi = {
     )
   },
 
-  async deleteLabel(namespace: string, slug: string, labelSlug: string): Promise<void> {
-    await fetchJson<void>(
+  async deleteLabel(namespace: string, slug: string, labelSlug: string): Promise<MessageResponse> {
+    return fetchJson<MessageResponse>(
       `${WEB_API_PREFIX}/suites/${cleanNamespace(namespace)}/${encodeURIComponent(slug)}/labels/${encodeURIComponent(labelSlug)}`,
       {
         method: 'DELETE',

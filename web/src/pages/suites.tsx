@@ -13,6 +13,7 @@ import { Pagination } from '@/shared/components/pagination'
 import { useVisibleLabels } from '@/shared/hooks/use-label-queries'
 import { Button } from '@/shared/ui/button'
 import { APP_SHELL_PAGE_CLASS_NAME } from '@/app/page-shell-style'
+import { HierarchicalLabelFilter } from '@/features/label/hierarchical-label-filter'
 
 const PAGE_SIZE = 8
 
@@ -92,8 +93,7 @@ export function SuiteSearchPage() {
   }
 
   const handleLabelToggle = (label: string) => {
-    const nextLabel = selectedLabel === label ? '' : label
-    navigateToSearch({ label: nextLabel, page: 0 })
+    navigateToSearch({ label, page: 0 })
   }
 
   const handleStarredToggle = () => {
@@ -138,21 +138,25 @@ export function SuiteSearchPage() {
         {resultCount > 0 && <div className="text-sm text-muted-foreground">{t('suites.results', { count: resultCount })}</div>}
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-sm font-medium text-muted-foreground">{t('suites.filters.label')}</span>
-        <Button variant={starredOnly ? 'default' : 'outline'} size="sm" onClick={handleStarredToggle}>
-          {t('suites.filterStarred')}
-        </Button>
-        {!starredOnly && labels?.map((label) => (
-          <Button
-            key={label.slug}
-            variant={selectedLabel === label.slug ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => handleLabelToggle(label.slug)}
-          >
-            {label.displayName}
-          </Button>
-        ))}
+      <div className="flex min-w-0 items-start gap-3">
+        <span className="flex h-8 shrink-0 items-center text-sm font-medium text-muted-foreground">
+          {t('suites.filters.label')}
+        </span>
+        <HierarchicalLabelFilter
+          labels={starredOnly ? [] : (labels ?? [])}
+          selectedSlug={selectedLabel}
+          onSelect={handleLabelToggle}
+          leadingControl={(
+            <Button
+              variant={starredOnly ? 'default' : 'outline'}
+              size="sm"
+              className="shrink-0"
+              onClick={handleStarredToggle}
+            >
+              {t('suites.filterStarred')}
+            </Button>
+          )}
+        />
       </div>
 
       {isPageLoading ? (

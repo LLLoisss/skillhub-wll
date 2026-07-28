@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth/use-auth'
 import { ShareButton } from '@/features/skill/share-button'
 import { AddSuiteSkillsDrawer } from '@/features/suite/add-suite-skills-drawer'
 import { SuiteTagList } from '@/features/suite/suite-tag-list'
+import { HierarchicalLabelDisplayWithLoading } from '@/features/label/hierarchical-label-display'
 import {
   SuiteGovernanceActions,
   SuiteHeaderActions,
@@ -15,7 +16,7 @@ import {
 } from '@/features/suite/suite-lifecycle-actions'
 import { EditSuiteDialog } from '@/features/suite/edit-suite-dialog'
 import { SuiteRatingInput } from '@/features/suite/suite-rating-input'
-import { useRateSuite, useRemoveSuiteSkills, useSuiteDetail, useSuiteUserRating, useToggleSuiteStar } from '@/features/suite/use-suite-queries'
+import { useRateSuite, useRemoveSuiteSkills, useSuiteDetail, useSuiteLabels, useSuiteUserRating, useToggleSuiteStar } from '@/features/suite/use-suite-queries'
 import { isUnavailableSuiteSkill } from '@/features/suite/suite-skill-eligibility'
 import { NamespaceBadge } from '@/shared/components/namespace-badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
@@ -24,7 +25,6 @@ import { Card } from '@/shared/ui/card'
 import { formatCompactCount } from '@/shared/lib/number-format'
 import { getSuiteSkillReturnTo, normalizeSkillDetailReturnTo } from '@/shared/lib/skill-navigation'
 import { toast } from '@/shared/lib/toast'
-import { cn } from '@/shared/lib/utils'
 
 /** Detail page for one expert suite, including skill association management and governance actions. */
 export function SuiteDetailPage() {
@@ -38,6 +38,7 @@ export function SuiteDetailPage() {
   const [addSkillsDrawerOpen, setAddSkillsDrawerOpen] = useState(false)
 
   const { data: suite, isLoading } = useSuiteDetail(namespace, slug)
+  const { data: suiteLabels, isLoading: isLoadingSuiteLabels } = useSuiteLabels(namespace, slug, Boolean(suite))
   const { data: userRating } = useSuiteUserRating(namespace, slug, isAuthenticated)
   const toggleStarMutation = useToggleSuiteStar(namespace, slug)
   const rateMutation = useRateSuite(namespace, slug)
@@ -184,23 +185,10 @@ export function SuiteDetailPage() {
           {suite.summary && (
             <p className="text-lg text-muted-foreground leading-relaxed">{suite.summary}</p>
           )}
-          {suite.labels.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {suite.labels.map((label) => (
-                <span
-                  key={label.slug}
-                  className={cn(
-                    'inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium',
-                    label.type === 'PRIVILEGED'
-                      ? 'border-amber-500/40 bg-amber-100 text-amber-900'
-                      : 'border-slate-300 bg-slate-100 text-slate-800',
-                  )}
-                >
-                  {label.displayName}
-                </span>
-              ))}
-            </div>
-          )}
+          <HierarchicalLabelDisplayWithLoading
+            labels={suiteLabels}
+            isLoading={isLoadingSuiteLabels}
+          />
           <SuiteHeaderActions
             suite={suite}
             canManage={canManage}
@@ -365,7 +353,7 @@ export function SuiteDetailPage() {
         <SuiteTagList
           namespace={namespace}
           slug={slug}
-          initialLabels={suite.labels}
+          initialLabels={suiteLabels ?? []}
           canManage={canManage}
           isSuperAdmin={isSuperAdmin}
         />
